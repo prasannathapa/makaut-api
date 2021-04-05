@@ -1,0 +1,56 @@
+{
+    "name": "PRASANNA THAPA",
+    "roll": "30000118020",
+    "registration": "183000110021 OF 2018-2019",
+    "result": {
+        "PCC-CS401": {
+            "subjectName": "Discrete Mathematics",
+            "CGPA": "10",
+            "grade": "O",
+            "weightage": "4.0"
+        },
+        "PCC-CS402": {
+            "subjectName": "Computer Architecture",
+            "CGPA": "10",
+            "grade": "O",
+            "weightage": "3.0"
+        },
+        "PCC-CS403": {
+            "subjectName": "Formal Language & Automata Theory",
+            "CGPA": "10",
+            "grade": "O",
+            "weightage": "3.0"
+        },
+        "PCC-CS404": {
+            "subjectName": "Design & Analysis of Algorithms",
+            "CGPA": "10",
+            "grade": "O",
+            "weightage": "3.0"
+        },
+        "BSC 401": {
+            "subjectName": "Biology",
+            "CGPA": "9",
+            "grade": "E",
+            "weightage": "3.0"
+        },
+        "MC401": {
+            "subjectName": "Environmental Sciences",
+            "CGPA": "9",
+            "grade": "E",
+            "weightage": "1.0"
+        },
+        "PCC-CS 492": {
+            "subjectName": "Computer Architecture",
+            "CGPA": "10",
+            "grade": "O",
+            "weightage": "2.0"
+        },
+        "PCC-CS494": {
+            "subjectName": "Design & Analysis of Algorithms",
+            "CGPA": "9",
+            "grade": "E",
+            "weightage": "2.0"
+        }
+    },
+    "collegeName": "MAKAUT, WB(300)"
+}
