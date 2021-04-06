@@ -2,7 +2,7 @@
 _____
 ### ![#f03c15](https://via.placeholder.com/15/f03c15/000000?text=+) [`MAKAUT RESULT API`](https://makaut-api.herokuapp.com/)
 
-It is a **NodeJS** based result scrapper with CSRF authentication bypassing, CSRF blocking recovery funftionality
+It is a **NodeJS** based result scrapper with CSRF authentication bypassing, CSRF blocking recovery functionality
 
 ## Features
 - 🎁 **JSON of the result of a `SINGLE` university roll number**
