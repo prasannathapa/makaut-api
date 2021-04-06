@@ -2,9 +2,15 @@ module.exports.getTextArray = (pdf) => {
     let textArray = [];
     pdf.forEach((val => {
         if(val.R && val.R.length > 0){
-            textArray.push(decodeURIComponent(val.R[0].T));
+            let str = decodeURIComponent(val.R[0].T);
+            textArray.push(str);
+            if(str.startsWith("No Records Found!"))
+                return {info: "No Records Found"};
         }
     }))
+    if(textArray.length <= 2){
+        return {info:"No Records Found", error:"Result doesnt exist"};
+    }
     let resObj={};
     for(let i = 0; i < textArray.length; i++){
         if(textArray[i].startsWith("NAME")){
@@ -42,7 +48,7 @@ module.exports.getTextArray = (pdf) => {
             resObj.collegeName = textArray[i].substring("College / Institution".length).trim();
         }
     }
-    ////const fs = require('fs')
-    ////fs.writeFile('result.json', JSON.stringify(resObj), 'utf8', ()=>{console.log("SAVED");});
+    //const fs = require('fs')
+    //fs.writeFile('result.json', JSON.stringify(pdf), 'utf8', ()=>{console.log("SAVED");});
     return resObj;
 }

@@ -31,7 +31,7 @@ app.get('/:rollbeg/:rollend/:sem', function (req, res) {
     rollEnd = parseInt(rollEnd);
     if(rollBeg>rollEnd)
         [rollBeg, rollEnd] = [rollEnd, rollBeg]
-    if (!check.isRoll(rollBeg) || !check.isRoll(rollEnd) || (rollEnd - rollBeg) > 150 || !check.isSemSingle(sem)) {
+    if (!check.isRoll(rollBeg) || !check.isRoll(rollEnd) || (rollEnd - rollBeg) > 120 || !check.isSemSingle(sem)) {
         res.end();
         return;
     }
@@ -91,6 +91,9 @@ async function sendResponse(semList, roll, callback){
        
     }
 }
+app.get('/restart', function (req, res, next) {
+    process.exit(1);
+});
 app.get('/reset', function (req, res) {
     csrfToken = "";
     console.log(csrfToken)
