@@ -30,14 +30,28 @@ app.get('/:roll/:sem', function (req, res) {
        sendResponse(res, sem, roll);
     }
 });
-function sendResponse(res, sem, roll){
-    exam.getMarkSheetPDF(csrfToken, sem[0], roll, async (data) => {
-        //await data.forEach(val => res.write(val + ",\n"))
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end(JSON.stringify(data,null,3));           
+function sendResponse(res, semList, roll){
+    let responseObject ={};
+    let callBackCount = 0;
+    semList.forEach(sem => {
+        exam.getMarkSheetPDF(csrfToken, sem, roll, async (data) => {
+            //await data.forEach(val => res.write(val + ",\n"))
+            callBackCount++;
+            if(data.name && !responseObject.name) responseObject.name = data.name;
+            if(data.roll && !responseObject.roll) responseObject.roll = data.roll;
+            if(data.registration && !responseObject.registration) responseObject.registration = data.registration;
+            if(data.collegeName && !responseObject.collegeName) responseObject.collegeName = data.collegeName;
+            if(!data.error)
+                responseObject[sem] = data.result;
+            else
+                responseObject[sem] = {info: data.info};
+            if(callBackCount == semList.length){
+                res.writeHead(200, {'Content-Type': 'application/json'});
+                res.end(JSON.stringify(responseObject,null,3));    
+            }       
+        });
     });
 }
-
 app.get('/reset', function (req, res) {
     csrfToken = "";
     console.log(csrfToken)

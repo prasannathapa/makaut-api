@@ -26,7 +26,7 @@ module.exports.getTextArray = (pdf) => {
                 textArray[i] == 'I'){
             //resObj.roll = textArray[++i];
             let subCode = ""
-            if(isNaN(textArray[i-3]))
+            if(isNaN(textArray[i-3]) && textArray[i-3] != "Points")
                 subCode = textArray[i-3]
             subCode += textArray[i-2]
             if(!resObj.result) resObj.result = {};

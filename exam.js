@@ -30,7 +30,7 @@ module.exports.getMarkSheetPDF = async function (csrf, sem, roll, callback) {
         if(response && response.statusCodeatus != 200){
             let pdfParser = new PDFParser(this,1);
             pdfParser.parseBuffer(body);
-            pdfParser.on("pdfParser_dataError", errData => callback({info:"Seems like MAKAUT Servers are speaking greek to us!", error:errData.parserError}));
+            pdfParser.on("pdfParser_dataError", errData => callback({info:"Records not found", error:errData.parserError}));
             pdfParser.on("pdfParser_dataReady", pdfData => callback(pdfExt.getTextArray(pdfData.formImage.Pages[0].Texts)));
         }
         else {
