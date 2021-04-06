@@ -1,56 +1,95 @@
 const express = require('./node_modules/express')
-const fs = require('fs');
-const path = require('path');
+const check = require('./validator');
 const exam = require('./exam');
-const { send } = require('process');
 
 let csrfToken;
 const port = process.env.PORT || 8080;
 const app = express();
-const semCodes = [['SM01', 'SM02', 'SM03', 'SM04', 'SM05', 'SM06', 'SM07', 'SM08'],
-                  ['SM01'], ['SM02'], ['SM03'], ['SM04'], ['SM05'], ['SM06'], ['SM07'], ['SM08']];
+
 app.get('/:roll/:sem', function (req, res) {
     let roll = req.params.roll;
     let sem = req.params.sem;
-    if (/^\d+$/.test(roll) == false || /^\d+$/.test(sem) == false || sem < 0 || sem > 8) {
+    if (!check.isRoll(roll) || !check.isSem(sem)) {
         res.end();
         return;
     }
-    sem = semCodes[sem];
+    sem = check.getSem(sem);
     console.log("roll", roll)
     console.log("sem", sem)
 
-    if (!csrfToken) {
-        exam.getCsrfToken(token => {
-            csrfToken = token
-            sendResponse(res, sem, roll);
-        })
-    }
-    else {
-       sendResponse(res, sem, roll);
-    }
+    sendResponse(sem, roll, responseObject =>{
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify(responseObject,null,3));    
+    });
+    
 });
-function sendResponse(res, semList, roll){
+app.get('/:rollbeg/:rollend/:sem', function (req, res) {
+    let rollBeg = req.params.rollbeg;
+    let rollEnd = req.params.rollend;
+    let sem = req.params.sem;
+    rollBeg = parseInt(rollBeg);
+    rollEnd = parseInt(rollEnd);
+    if(rollBeg>rollEnd)
+        [rollBeg, rollEnd] = [rollEnd, rollBeg]
+    if (!check.isRoll(rollBeg) || !check.isRoll(rollEnd) || (rollEnd - rollBeg) > 150 || !check.isSemSingle(sem)) {
+        res.end();
+        return;
+    }
+    sem = check.getSem(sem);
+    console.log("rollStart", rollBeg)
+    console.log("rollEND", rollEnd)
+    console.log("sem", sem)
+
+    sendRangeResponse(sem,  rollBeg, rollEnd, responseObject =>{
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify(responseObject,null,3));    
+    });
+});
+async function sendRangeResponse(sem, rollBeg, rollEnd, callback){
+    let responseObject = {};
+    let callBackCount  = 0; //variable are syncronous
+    for(let itr = rollBeg; itr <= rollEnd; itr++){
+        sendResponse(sem,itr.toString(),result=>{
+            callBackCount ++;
+            responseObject[itr.toString()]=result
+            console.log(sem, itr, callBackCount);
+            if(callBackCount == (rollEnd-rollBeg+1)){ 
+                const sortedResult = Object.keys(responseObject).sort().reduce((obj, key) => {
+                    obj[key] = responseObject[key]; 
+                    return obj;
+                },{});
+                callback(sortedResult);
+            }
+        }) 
+    } 
+}
+async function sendResponse(semList, roll, callback){
     let responseObject ={};
     let callBackCount = 0;
-    semList.forEach(sem => {
-        exam.getMarkSheetPDF(csrfToken, sem, roll, async (data) => {
-            //await data.forEach(val => res.write(val + ",\n"))
-            callBackCount++;
-            if(data.name && !responseObject.name) responseObject.name = data.name;
-            if(data.roll && !responseObject.roll) responseObject.roll = data.roll;
-            if(data.registration && !responseObject.registration) responseObject.registration = data.registration;
-            if(data.collegeName && !responseObject.collegeName) responseObject.collegeName = data.collegeName;
-            if(!data.error)
-                responseObject[sem] = data.result;
-            else
-                responseObject[sem] = {info: data.info};
-            if(callBackCount == semList.length){
-                res.writeHead(200, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify(responseObject,null,3));    
-            }       
+    for(let i in semList) {
+        const sem = semList[i];
+        await exam.getCsrfToken(token => { 
+            csrfToken = token 
+            exam.getMarkSheetPDF(csrfToken, sem, roll, async (data) => {
+                //await data.forEach(val => res.write(val + ",\n"))
+                callBackCount++;
+                if(data.name && !responseObject.name) responseObject.name = data.name;
+                if(data.roll && !responseObject.roll) responseObject.roll = data.roll;
+                if(data.registration && !responseObject.registration) responseObject.registration = data.registration;
+                if(data.collegeName && !responseObject.collegeName) responseObject.collegeName = data.collegeName;
+                if(!data.error)
+                    responseObject[sem] = data.result;
+                else
+                    responseObject[sem] = {info: data.info};
+                if(data.error && data.error == "CSRF-MISMATCH")
+                    sendResponse([sem],roll, callback);
+                if(callBackCount == semList.length){
+                    callback(responseObject);
+                }       
+            });
         });
-    });
+       
+    }
 }
 app.get('/reset', function (req, res) {
     csrfToken = "";
@@ -63,5 +102,9 @@ app.listen(port, () => {
 });
 
 module.exports.resetCSRF = () => {
+    csrfToken = null;
+}
+module.exports.reinitCSRF = () => {
+    csrfToken = null;
     exam.getCsrfToken(token => { csrfToken = token });
 }
