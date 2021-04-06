@@ -2,7 +2,7 @@
 _____
 ### ![#f03c15](https://via.placeholder.com/15/f03c15/000000?text=+) [`MAKAUT RESULT API`](https://makaut-api.herokuapp.com/)
 
-It is a NodeJS based result scrapper with CSRF authentication bypassing, CSRF blocking recovery funftionality
+It is a **NodeJS** based result scrapper with CSRF authentication bypassing, CSRF blocking recovery funftionality
 
 ## Features
 - 🎁 **JSON of the result of a `SINGLE` university roll number**
@@ -29,7 +29,7 @@ https://localhost:8080/[ROLL NUMBER]/[SEMS]
 (_Here `30000118020` is taken as roll number_)
 SEMS | Meaning | API Call (URL) 
 ------|------- |---
- `0` | All Semesters form 1 to 8|[`http://localhost:8080/30000118020/0`](https://makaut-api.herokuapp.com/30000118020/)
+ `0` | All Semesters form 1 to 8|[`http://localhost:8080/30000118020/0`](https://makaut-api.herokuapp.com/30000118020/0)
  `1` | Semester 1|[`http://localhost:8080/30000118020/1`](https://makaut-api.herokuapp.com/30000118020/1)
  `2` | Semester 2|[`http://localhost:8080/30000118020/2`](https://makaut-api.herokuapp.com/30000118020/2)
  `3241` | Semester 3|[`http://localhost:8080/30000118020/3241`](https://makaut-api.herokuapp.com/30000118020/3241)
