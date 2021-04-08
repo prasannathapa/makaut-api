@@ -5,7 +5,11 @@ const exam = require('./exam');
 let csrfToken;
 const port = process.env.PORT || 8080;
 const app = express();
-
+app.get('/', function (req, res) {
+    res.statusCode = 302;
+    res.setHeader('Location', 'https://github.com/prasannathapa/makaut-api/blob/master/README.md');
+    return res.end();
+});
 app.get('/:roll/:sem', function (req, res) {
     let roll = req.params.roll;
     let sem = req.params.sem;
@@ -17,11 +21,11 @@ app.get('/:roll/:sem', function (req, res) {
     console.log("roll", roll)
     console.log("sem", sem)
 
-    sendResponse(sem, roll, responseObject =>{
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end(JSON.stringify(responseObject,null,3));    
+    sendResponse(sem, roll, responseObject => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(responseObject, null, 3));
     });
-    
+
 });
 app.get('/:rollbeg/:rollend/:sem', function (req, res) {
     let rollBeg = req.params.rollbeg;
@@ -29,7 +33,7 @@ app.get('/:rollbeg/:rollend/:sem', function (req, res) {
     let sem = req.params.sem;
     rollBeg = parseInt(rollBeg);
     rollEnd = parseInt(rollEnd);
-    if(rollBeg>rollEnd)
+    if (rollBeg > rollEnd)
         [rollBeg, rollEnd] = [rollEnd, rollBeg]
     if (!check.isRoll(rollBeg) || !check.isRoll(rollEnd) || (rollEnd - rollBeg) > 120 || !check.isSemSingle(sem)) {
         res.end();
@@ -40,55 +44,55 @@ app.get('/:rollbeg/:rollend/:sem', function (req, res) {
     console.log("rollEND", rollEnd)
     console.log("sem", sem)
 
-    sendRangeResponse(sem,  rollBeg, rollEnd, responseObject =>{
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end(JSON.stringify(responseObject,null,3));    
+    sendRangeResponse(sem, rollBeg, rollEnd, responseObject => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(responseObject, null, 3));
     });
 });
-async function sendRangeResponse(sem, rollBeg, rollEnd, callback){
+async function sendRangeResponse(sem, rollBeg, rollEnd, callback) {
     let responseObject = {};
-    let callBackCount  = 0; //variable are syncronous
-    for(let itr = rollBeg; itr <= rollEnd; itr++){
-        sendResponse(sem,itr.toString(),result=>{
-            callBackCount ++;
-            responseObject[itr.toString()]=result
+    let callBackCount = 0; //variable are syncronous
+    for (let itr = rollBeg; itr <= rollEnd; itr++) {
+        sendResponse(sem, itr.toString(), result => {
+            callBackCount++;
+            responseObject[itr.toString()] = result
             console.log(sem, itr, callBackCount);
-            if(callBackCount == (rollEnd-rollBeg+1)){ 
+            if (callBackCount == (rollEnd - rollBeg + 1)) {
                 const sortedResult = Object.keys(responseObject).sort().reduce((obj, key) => {
-                    obj[key] = responseObject[key]; 
+                    obj[key] = responseObject[key];
                     return obj;
-                },{});
+                }, {});
                 callback(sortedResult);
             }
-        }) 
-    } 
+        })
+    }
 }
-async function sendResponse(semList, roll, callback){
-    let responseObject ={};
+async function sendResponse(semList, roll, callback) {
+    let responseObject = {};
     let callBackCount = 0;
-    for(let i in semList) {
+    for (let i in semList) {
         const sem = semList[i];
-        await exam.getCsrfToken(token => { 
-            csrfToken = token 
+        await exam.getCsrfToken(token => {
+            csrfToken = token
             exam.getMarkSheetPDF(csrfToken, sem, roll, async (data) => {
                 //await data.forEach(val => res.write(val + ",\n"))
                 callBackCount++;
-                if(data.name && !responseObject.name) responseObject.name = data.name;
-                if(data.roll && !responseObject.roll) responseObject.roll = data.roll;
-                if(data.registration && !responseObject.registration) responseObject.registration = data.registration;
-                if(data.collegeName && !responseObject.collegeName) responseObject.collegeName = data.collegeName;
-                if(!data.error)
+                if (data.name && !responseObject.name) responseObject.name = data.name;
+                if (data.roll && !responseObject.roll) responseObject.roll = data.roll;
+                if (data.registration && !responseObject.registration) responseObject.registration = data.registration;
+                if (data.collegeName && !responseObject.collegeName) responseObject.collegeName = data.collegeName;
+                if (!data.error)
                     responseObject[sem] = data.result;
                 else
-                    responseObject[sem] = {info: data.info};
-                if(data.error && data.error == "CSRF-MISMATCH")
-                    sendResponse([sem],roll, callback);
-                if(callBackCount == semList.length){
+                    responseObject[sem] = { info: data.info };
+                if (data.error && data.error == "CSRF-MISMATCH")
+                    sendResponse([sem], roll, callback);
+                if (callBackCount == semList.length) {
                     callback(responseObject);
-                }       
+                }
             });
         });
-       
+
     }
 }
 app.get('/restart', function (req, res, next) {
