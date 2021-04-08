@@ -72,7 +72,7 @@ async function sendResponse(semList, roll, callback) {
     let callBackCount = 0;
     for (let i in semList) {
         const sem = semList[i];
-        await exam.getCsrfToken(token => {
+        exam.getCsrfToken(token => {
             csrfToken = token
             exam.getMarkSheetPDF(csrfToken, sem, roll, async (data) => {
                 //await data.forEach(val => res.write(val + ",\n"))
@@ -101,7 +101,7 @@ app.get('/restart', function (req, res, next) {
 app.get('/reset', function (req, res) {
     csrfToken = "";
     console.log(csrfToken)
-    res.send("Done! " + csrfToken);
+    res.send("Done!! " + csrfToken);
 });
 app.listen(port, () => {
     console.log("server started at http://localhost:" + port);
