@@ -10,8 +10,9 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
-    "jsdom": "^16.4.0",
-    "pdf2json": "^1.2.0",
+    "jsdom": "^16.5.2",
+    "mongodb": "^3.6.6",
+    "pdf2json": "^1.2.1",
     "request": "^2.88.2"
   }
 }
