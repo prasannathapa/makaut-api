@@ -85,8 +85,8 @@ async function sendResponse(semList, roll, callback) {
                     responseObject[sem] = data.result;
                 else
                     responseObject[sem] = { info: data.info };
-                if (data.error && data.error == "CSRF-MISMATCH")
-                    sendResponse([sem], roll, callback);
+               //if (data.error && data.error == "CSRF-MISMATCH")
+                   // sendResponse([sem], roll, callback);
                 if (callBackCount == semList.length) {
                     callback(responseObject);
                 }
