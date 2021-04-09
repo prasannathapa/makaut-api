@@ -1,5 +1,5 @@
 const { MongoClient } = require('mongodb');
-const uri = "mongodb+srv://snowfox:WxiEseAAYgFnyFuG@snowfox.2wc0z.gcp.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+const uri = process.env.MONGO_URL;
 let client;
 let gradeDB;
 module.exports.init = async function init() {
