@@ -1,5 +1,6 @@
 const { MongoClient } = require('mongodb');
-const uri = process.env.MONGO_URL;
+const { getSemInv } = require('./validator');
+const uri = "mongodb+srv://snowfox:WxiEseAAYgFnyFuG@snowfox.2wc0z.gcp.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";//process.env.MONGO_URL;
 let client;
 let gradeDB;
 module.exports.init = async function init() {
@@ -19,12 +20,18 @@ module.exports.close = async function close() {
     await this.client.close();
     this.client = null;
 }
-module.exports.fetch = async function fetch(roll, sems) {
+module.exports.fetch = async function fetch(roll, sems, callback) {
     if (!this.client || !this.client.isConnected())
         await this.init();
-    await gradeDB.findOne({'_id':roll})
+    let proj = {'_id':0}
+    const invSem = getSemInv(sems)
+    for(let i = 0; i < invSem.length; i++){
+        proj[invSem[i]] = 0;
+    }
+    await this.gradeDB.findOne({'_id':roll},{projection:proj})
         .then(results => {
-            console.log(results)
+           // console.log(results)
+           callback(results);
         })
         .catch(error => console.error(error));
 }
@@ -36,17 +43,22 @@ module.exports.update = async function update(jsonObj) {
             //console.log(res);
         })
 }
-module.exports.fetchRange = async function fetchRange(start, end, callback) {
+module.exports.fetchRange = async function fetchRange(start, end, sems, callback) {
     if (!this.client || !this.client.isConnected())
         await this.init();
+    let proj = {'_id':0}
+    const invSem = getSemInv(sems)
+    for(let i = 0; i < invSem.length; i++){
+        proj[invSem[i]] = 0;
+    }
     await this.gradeDB.find(
         { $and:[ 
             { '_id': { $gte : start } }, 
             { '_id': { $lte : end   } }
         ]},
-        {projection:{'_id':0}})
+        {projection:proj})
     .toArray().then(results => {
-        console.log("Found",results.length,"roll in MongoDB");
+        //console.log("Found",results.length,"roll in MongoDB");
         callback(results);
     })
     .catch(error => {

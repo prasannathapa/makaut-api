@@ -2,7 +2,8 @@ const express = require('./node_modules/express')
 const check = require('./validator');
 const exam = require('./exam');
 const DB = require('./mongoStore');
-let csrfToken = {id:null,count:0}
+const { logger } = require('./logger');
+let csrfToken = { id: null, count: 0 }
 const port = process.env.PORT || 8080;
 const app = express();
 app.get('/', function (req, res) {
@@ -18,15 +19,26 @@ app.get('/:roll/:sem', function (req, res) {
         return;
     }
     sem = check.getSem(sem);
-    console.log("roll", roll)
-    console.log("sem", sem)
-
-    sendResponse(sem, roll, {}, responseObject => {
+    sendSingleResponse(roll, sem, responseObject => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(responseObject, null, 3));
+        res.end(JSON.stringify(responseObject, null, 2));
     });
-
 });
+async function sendSingleResponse(roll, sem, callback) {
+    logger.log("GET REQ Roll:[", roll, "]", "sem:", sem)
+    let backUpObj = {};
+    let reqSaved = 0;
+    await DB.fetch(parseInt(roll), sem, gradeCard => {
+        backUpObj[roll] = gradeCard;
+        sem.forEach(s => {
+            if(backUpObj[roll][s])
+                reqSaved++;
+        });
+    });
+    logger.log("Initial Req Size:[", sem.length, "] backup data:[", reqSaved, "]\n"+
+                "New Request Size:[", sem.length - reqSaved, "]  effeciency: ", (reqSaved / sem.length) * 100+"%");
+    sendResponse(sem, roll, backUpObj, responseObject => callback(responseObject));
+}
 app.get('/:rollbeg/:rollend/:sem', function (req, res) {
     let rollBeg = req.params.rollbeg;
     let rollEnd = req.params.rollend;
@@ -40,9 +52,8 @@ app.get('/:rollbeg/:rollend/:sem', function (req, res) {
         return;
     }
     sem = check.getSem(sem);
-    console.log("rollStart", rollBeg)
-    console.log("rollEND", rollEnd)
-    console.log("sem", sem)
+    logger.log("GET REQ Roll:[", rollBeg, "to", rollEnd, "]", "sem:", sem, "\n",
+        "Range Size:[", (rollEnd - rollBeg + 1), "] Total Request:[", (rollEnd - rollBeg + 1) * sem.length, "]")
 
     sendRangeResponse(sem, rollBeg, rollEnd, responseObject => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -50,20 +61,30 @@ app.get('/:rollbeg/:rollend/:sem', function (req, res) {
     });
 });
 async function sendRangeResponse(sem, rollBeg, rollEnd, callback) {
-    let responseObject = {},backUpObj = {};
+    let responseObject = {}, backUpObj = {};
     let callBackCount = 0; //variable are syncronous
-    await DB.fetchRange(rollBeg, rollEnd, data => {
+    const totalCount = (rollEnd - rollBeg + 1);
+    const totalReqCount = totalCount * sem.length;
+    let reqSaved = 0;
+    await DB.fetchRange(rollBeg, rollEnd, sem, data => {
         for (let itr = 0; itr < data.length; itr++) {
             const gradeCard = data[itr];
             backUpObj[gradeCard.roll] = gradeCard;
+            sem.forEach(s => {
+                if (data[itr][s])
+                    reqSaved++;
+            });
         }
     });
+    logger.log("Initial Req Size:[", totalReqCount, "] backup data:[", reqSaved, "] data\n"+
+                "New Request Size:[", totalReqCount - reqSaved, "]  effeciency: ", (reqSaved / totalReqCount) * 100+"%");
     for (let itr = rollBeg; itr <= rollEnd; itr++) {
         const roll_itr = itr.toString();
         sendResponse(sem, roll_itr, backUpObj, result => {
             callBackCount++;
+            logger.log("Building Response Progress: " + (callBackCount / totalCount) * 100 + "%");
             responseObject[roll_itr] = result
-            if (callBackCount == (rollEnd - rollBeg + 1)) {
+            if (callBackCount == totalCount) {
                 const sortedResult = Object.keys(responseObject).sort().reduce((obj, key) => {
                     obj[key] = responseObject[key];
                     return obj;
@@ -86,28 +107,28 @@ async function sendResponse(semList, roll, backUp, callback) {
             }
         }
         else {
-            let token = await exam.getCsrfToken();
-            exam.getMarkSheetPDF(token, sem, roll, (data) => {
-                //await data.forEach(val => res.write(val + ",\n"))
-                callBackCount++;
-                console.log("GETTING DATA FROM MAKAUT SERVER: ", sem, roll, token,callBackCount);
-               
-                if (data.name && !responseObject.name) responseObject.name = data.name;
-                if (data.roll && !responseObject.roll) responseObject.roll = data.roll;
-                if (data.registration && !responseObject.registration) responseObject.registration = data.registration;
-                if (data.collegeName && !responseObject.collegeName) responseObject.collegeName = data.collegeName;
-                if (!data.error)
-                    responseObject[sem] = data[sem];
-                else
-                    responseObject[sem] = { info: data.info };
-                //if (data.error && data.error == "CSRF-MISMATCH")
+            exam.getCsrfToken().then(token => {
+                exam.getMarkSheetPDF(token, sem, roll, (data) => {
+                    //await data.forEach(val => res.write(val + ",\n"))
+                    callBackCount++;
+                    logger.log("GETTING DATA FROM MAKAUT SERVER: ", sem, roll, token);
+
+                    if (data.name && !responseObject.name) responseObject.name = data.name;
+                    if (data.roll && !responseObject.roll) responseObject.roll = data.roll;
+                    if (data.registration && !responseObject.registration) responseObject.registration = data.registration;
+                    if (data.collegeName && !responseObject.collegeName) responseObject.collegeName = data.collegeName;
+                    if (!data.error)
+                        responseObject[sem] = data[sem];
+                    else
+                        responseObject[sem] = { info: data.info };
+                    //if (data.error && data.error == "CSRF-MISMATCH")
                     //this.reinitCSRF();
                     //sendResponse([sem], roll, callback);
-                if (callBackCount == semList.length) {
-                    callback(responseObject);
-                }
+                    if (callBackCount == semList.length) {
+                        callback(responseObject);
+                    }
+                });
             });
-            
         }
     }
 }
@@ -115,18 +136,18 @@ app.get('/restart', function (req, res, next) {
     process.exit(1);
 });
 app.get('/reset', function (req, res) {
-    csrfToken = {id:null,count:0};
-    console.log(csrfToken)
+    csrfToken = { id: null, count: 0 };
+    logger.log(csrfToken)
     res.send("Done! " + csrfToken);
 });
 app.listen(port, () => {
-    console.log("server started at http://localhost:" + port);
+    logger.log("server started at http://localhost:" + port);
 });
 
 module.exports.resetCSRF = () => {
-    csrfToken = {id:null,count:0};
+    csrfToken = { id: null, count: 0 };
 }
-module.exports.reinitCSRF = async function reinitCSRF(){
-    csrfToken = {id:null,count:0};
+module.exports.reinitCSRF = async function reinitCSRF() {
+    csrfToken = { id: null, count: 0 };
     csrfToken.id = await exam.getCsrfToken();
 }
