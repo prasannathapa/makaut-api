@@ -8,13 +8,23 @@ module.exports.isSemSingle = (num)=>{
     return /^([1-8])$/.test(num);
 }
 const sems = ['SM01', 'SM02', 'SM03', 'SM04', 'SM05', 'SM06', 'SM07', 'SM08'];
+
 module.exports.getSem = sem =>{
     if(sem == '0')
         return sems.slice();
     let semList = [];
-    for(let i = 0; i < sem.length; i++){
-        let ai = parseInt(sem[i])
-        semList.push(sems[ai-1]);
-    }
+    sem = new Set(sem);
+    sem.forEach(value => {
+        semList.push(sems[value-1]);
+    });
+    return semList;
+}
+module.exports.getSemInv = sem => {
+    let semList = [];
+    sem = new Set(sem);
+    sems.forEach(value => {
+        if(!sem.has(value))
+            semList.push(value);
+    });
     return semList;
 }
