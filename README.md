@@ -1,8 +1,36 @@
 # Maulana Abul Kalam Azad University of Technology
 _____
+## How does it work
+
 ### ![#f03c15](https://via.placeholder.com/15/f03c15/000000?text=+) [`MAKAUT RESULT API`](https://makaut-api.herokuapp.com/)
 
-It is a **NodeJS** based result scrapper with CSRF authentication bypassing, CSRF blocking recovery functionality
+![](./working.jpg)
+
+- It is a **NodeJS** based Grade Card API with **CSRF authentication bypassing** and **Result auto Caching functionality**. 
+
+- It updates the **SESSION** and **CSRF TOKEN** with MAKAUT server per requested roll number (while session and CSRF token in requesting every semester for an individual roll - number remains the same), making all genrated requestes less prone to getting blocked.
+
+- **The Result Caching equiped with Parrallel Request Calls** makes it one of the **FASTEST** opensource Bulk-Result-Scrapper of MAKAUT.
+If you find anything faster then this :wink: feel free to open an issue to make it faster!
+
+- Since I have hosted in Heroku with a free dyno, the `request timeout` is 30sec. If it fails to process your request within 30secs It will give you of all the results that it could parse withing the given time with an extra json field "info" at the end and continues to Cache your request even after the response so that it can give you results even faster then before. 
+
+Example
+```
+{...
+    ...
+      "30000118020" : {....},
+      "30000118021" : {....},
+      "30000118022" : {....},
+      "info" : {
+                queryTotal: 89,
+                queryProcessed: 80,
+                cause: "this is due to the limitations of heroku server of 30sec timeout",
+                fix: "Try sending the Request again as the server would cache all of the results in its database for faster access and to minimize the load on makaut server. If this persists then try to reduce the range",
+                tip: "Give valid semesters in which results actally exists, all unpublished results are taken from MAKAUT server or Break your range into 2 halfs"
+       }
+}
+```
 
 ## Features
 - 🎁 **JSON of the result of a `SINGLE` university roll number**
