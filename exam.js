@@ -1,25 +1,22 @@
 const request = require('request');
 const JSDom = require('./node_modules/jsdom')
-const main = require('./index');
 const pdfExt = require('./dataExtractor');
 const PDFParser = require("./node_modules/pdf2json");
-const DB = require('./mongoStore')
-
-let cookieJar = request.jar();
-
-module.exports.getCsrfToken = async function () {
+const { logger } = require('./logger');
+const sockets = {maxSockets:240}
+module.exports.getCsrfToken = async function (sessionCookie) {
     return new Promise((resolve,reject)=>{
-        request.get({ url: 'https://makaut1.ucanapply.com/smartexam/public/result-details', jar: cookieJar }, (error, response, body) => {
+        request.get({ url: 'https://makaut1.ucanapply.com/smartexam/public/result-details', jar: sessionCookie,pool: sockets}, (error, response, body) => {
             if(error)
                 logger.log('getCSRF ERROR statusCode:', response && response.statusCode, 'error:', error); 
             let jsDom = new JSDom.JSDOM(body);
             element = jsDom.window.document.querySelectorAll("meta[name='csrf-token'")[0];
-            return element ? resolve(element.getAttribute("content")) : resolve(null);
+            element ? resolve(element.getAttribute("content")) : resolve(null);
         });
     })
 };
 
-module.exports.getMarkSheetPDF = async function (csrf, sem, roll, callback) {
+module.exports.getMarkSheetPDF = async function (csrf, sem, roll, sessionCookie, callback) {
 
     let formData = {
         _token: csrf,
@@ -29,8 +26,14 @@ module.exports.getMarkSheetPDF = async function (csrf, sem, roll, callback) {
         examtype: 'result-details',
         all: ''
     };
-    request.post({ url: 'https://makaut1.ucanapply.com/smartexam/public/download-pdf-result', jar: cookieJar , form:formData, encoding: null}, 
-    (error, response, body) => {
+    request.post({ 
+        url: 'https://makaut1.ucanapply.com/smartexam/public/download-pdf-result', 
+        jar:sessionCookie , 
+        pool:sockets, 
+        timeout:28000,
+        form:formData, 
+        encoding: null
+    }, (error, response, body) => {
         if(response && response.statusCodeatus != 200){
             let pdfParser = new PDFParser();
             pdfParser.parseBuffer(body);
@@ -38,7 +41,7 @@ module.exports.getMarkSheetPDF = async function (csrf, sem, roll, callback) {
             pdfParser.on("pdfParser_dataReady", pdfData => callback(pdfExt.getTextArray(pdfData.formImage.Pages[0].Texts, sem)));
         }
         else {
-            logger.log("PDF ERROR",response.statusCodeatus, body);
+            logger.log("PDF ERROR",response, body);
             callback({info: "Our server boy was caught smuggling marksheet by the professors, please try again",error:"CSRF-MISMATCH"});
         }
         if(error){

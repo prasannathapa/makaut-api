@@ -23,46 +23,51 @@ module.exports.close = async function close() {
 module.exports.fetch = async function fetch(roll, sems, callback) {
     if (!this.client || !this.client.isConnected())
         await this.init();
-    let proj = {'_id':0}
+    let proj = { '_id': 0 }
     const invSem = getSemInv(sems)
-    for(let i = 0; i < invSem.length; i++){
+    for (let i = 0; i < invSem.length; i++) {
         proj[invSem[i]] = 0;
     }
-    await this.gradeDB.findOne({'_id':roll},{projection:proj})
+    await this.gradeDB.findOne({ '_id': roll }, { projection: proj })
         .then(results => {
-           // console.log(results)
-           callback(results);
+            // console.log(results)
+            callback(results);
         })
-        .catch(error => console.error(error));
+        .catch(error => {
+            console.error(error);
+            callback({});
+        });
 }
 module.exports.update = async function update(jsonObj) {
     if (!this.client || !this.client.isConnected())
         await this.init();
     await this.gradeDB.
-        updateOne({ '_id': parseInt(jsonObj.roll) }, { $set: jsonObj },{ upsert: true }, (err, res) => {
+        updateOne({ '_id': parseInt(jsonObj.roll) }, { $set: jsonObj }, { upsert: true }, (err, res) => {
             //console.log(res);
         })
 }
 module.exports.fetchRange = async function fetchRange(start, end, sems, callback) {
     if (!this.client || !this.client.isConnected())
         await this.init();
-    let proj = {'_id':0}
+    let proj = { '_id': 0 }
     const invSem = getSemInv(sems)
-    for(let i = 0; i < invSem.length; i++){
+    for (let i = 0; i < invSem.length; i++) {
         proj[invSem[i]] = 0;
     }
     await this.gradeDB.find(
-        { $and:[ 
-            { '_id': { $gte : start } }, 
-            { '_id': { $lte : end   } }
-        ]},
-        {projection:proj})
-    .toArray().then(results => {
-        //console.log("Found",results.length,"roll in MongoDB");
-        callback(results);
-    })
-    .catch(error => {
-        console.error(error);
-        callback([]);
-    });
+        {
+            $and: [
+                { '_id': { $gte: start } },
+                { '_id': { $lte: end } }
+            ]
+        },
+        { projection: proj })
+        .toArray().then(results => {
+            //console.log("Found",results.length,"roll in MongoDB");
+            callback(results);
+        })
+        .catch(error => {
+            console.error(error);
+            callback([]);
+        });
 }

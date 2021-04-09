@@ -3,8 +3,10 @@ const check = require('./validator');
 const exam = require('./exam');
 const DB = require('./mongoStore');
 const { logger } = require('./logger');
+const request = require('request');
 let csrfToken = { id: null, count: 0 }
 const port = process.env.PORT || 8080;
+const timeout = 29000;
 const app = express();
 app.get('/', function (req, res) {
     res.statusCode = 302;
@@ -19,25 +21,41 @@ app.get('/:roll/:sem', function (req, res) {
         return;
     }
     sem = check.getSem(sem);
-    sendSingleResponse(roll, sem, responseObject => {
+    sendSingleResponse(roll, sem).then(responseObject => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(responseObject, null, 2));
+    }).catch(responseObject =>{
+        res.writeHead(206, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(responseObject, null, 2));
     });
 });
-async function sendSingleResponse(roll, sem, callback) {
-    logger.log("GET REQ Roll:[", roll, "]", "sem:", sem)
-    let backUpObj = {};
-    let reqSaved = 0;
-    await DB.fetch(parseInt(roll), sem, gradeCard => {
-        backUpObj[roll] = gradeCard;
-        sem.forEach(s => {
-            if(backUpObj[roll][s])
-                reqSaved++;
+async function sendSingleResponse(roll, sem) {
+    return new Promise((resolve, reject) => {
+        logger.log("GET REQ Roll:[", roll, "]", "sem:", sem)
+        let backUpObj = {};
+        let reqSaved = 0;
+        setTimeout(() => {
+            backUpObj.info = {
+                queryTotal: sem.length,
+                queryProcessed: reqSaved,
+                cause: "this is due to the limitations of heroku server of 30sec timeout",
+                fix: "Try sending the Request again as the server",
+                tip: "This is bad, single query should not result in timeout. Try raising issue in its github page"
+            };
+            reject(backUpObj);
+        }, timeout);
+        DB.fetch(parseInt(roll), sem, gradeCard => {
+            backUpObj[roll] = gradeCard;
+            sem.forEach(s => {
+                if (backUpObj[roll][s])
+                    reqSaved++;
+            });
+            logger.log("Initial Req Size:[", sem.length, "] backup data:[", reqSaved, "]\n" +
+                "New Request Size:[", sem.length - reqSaved, "]  effeciency: ", (reqSaved / sem.length) * 100 + "%");
+            sendResponse(sem, roll, backUpObj, responseObject => resolve(sorted(responseObject)));
         });
     });
-    logger.log("Initial Req Size:[", sem.length, "] backup data:[", reqSaved, "]\n"+
-                "New Request Size:[", sem.length - reqSaved, "]  effeciency: ", (reqSaved / sem.length) * 100+"%");
-    sendResponse(sem, roll, backUpObj, responseObject => callback(responseObject));
+
 }
 app.get('/:rollbeg/:rollend/:sem', function (req, res) {
     let rollBeg = req.params.rollbeg;
@@ -55,60 +73,82 @@ app.get('/:rollbeg/:rollend/:sem', function (req, res) {
     logger.log("GET REQ Roll:[", rollBeg, "to", rollEnd, "]", "sem:", sem, "\n",
         "Range Size:[", (rollEnd - rollBeg + 1), "] Total Request:[", (rollEnd - rollBeg + 1) * sem.length, "]")
 
-    sendRangeResponse(sem, rollBeg, rollEnd, responseObject => {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(responseObject, null, 3));
-    });
+    sendRangeResponse(sem, rollBeg, rollEnd)
+        .then(responseObject => {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(responseObject, null, 3));
+        }).catch((responseObject) => {
+            res.writeHead(206, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(responseObject, null, 3));
+        });
 });
-async function sendRangeResponse(sem, rollBeg, rollEnd, callback) {
-    let responseObject = {}, backUpObj = {};
-    let callBackCount = 0; //variable are syncronous
-    const totalCount = (rollEnd - rollBeg + 1);
-    const totalReqCount = totalCount * sem.length;
-    let reqSaved = 0;
-    await DB.fetchRange(rollBeg, rollEnd, sem, data => {
-        for (let itr = 0; itr < data.length; itr++) {
-            const gradeCard = data[itr];
-            backUpObj[gradeCard.roll] = gradeCard;
-            sem.forEach(s => {
-                if (data[itr][s])
-                    reqSaved++;
-            });
-        }
-    });
-    logger.log("Initial Req Size:[", totalReqCount, "] backup data:[", reqSaved, "] data\n"+
-                "New Request Size:[", totalReqCount - reqSaved, "]  effeciency: ", (reqSaved / totalReqCount) * 100+"%");
-    for (let itr = rollBeg; itr <= rollEnd; itr++) {
-        const roll_itr = itr.toString();
-        sendResponse(sem, roll_itr, backUpObj, result => {
-            callBackCount++;
-            logger.log("Building Response Progress: " + (callBackCount / totalCount) * 100 + "%");
-            responseObject[roll_itr] = result
-            if (callBackCount == totalCount) {
-                const sortedResult = Object.keys(responseObject).sort().reduce((obj, key) => {
-                    obj[key] = responseObject[key];
-                    return obj;
-                }, {});
-                callback(sortedResult);
+async function sendRangeResponse(sem, rollBeg, rollEnd) {
+    return new Promise((resolve, reject) => {
+        let responseObject = {}, backUpObj = {};
+        let callBackCount = 0; //variable are syncronous
+        const totalCount = (rollEnd - rollBeg + 1);
+        const totalReqCount = totalCount * sem.length;
+        let reqSaved = 0;
+        setTimeout(() => {
+            responseObject.info = {
+                queryTotal: totalCount,
+                queryProcessed: callBackCount,
+                cause: "this is due to the limitations of heroku server of 30sec timeout",
+                fix: "Try sending the Request again as the server would cache all of the results in its database for faster access and to minimize the load on makaut server. If this persists then try to reduce the range",
+                tip: "Give valid semesters in which results actally exists, all unpublished results are taken from MAKAUT server or Break your range into 2 halfs"
+            };
+            reject(responseObject);
+        }, timeout);
+        DB.fetchRange(rollBeg, rollEnd, sem, data => {
+            //GET BACKUP DATA
+            for (let itr = 0; itr < data.length; itr++) {
+                const gradeCard = data[itr];
+                backUpObj[gradeCard.roll] = gradeCard;
+                sem.forEach(s => {
+                    if (data[itr][s])
+                        reqSaved++;
+                });
             }
-        })
-    }
+            logger.log("Initial Req Size:[", totalReqCount, "] backup data:[", reqSaved, "] data\n" +
+                "New Request Size:[", totalReqCount - reqSaved, "]  effeciency: ", (reqSaved / totalReqCount) * 100 + "%");
+            //GET SERVER DATA
+            for (let itr = rollBeg; itr <= rollEnd; itr++) {
+                const roll_itr = itr.toString();
+                sendResponse(sem, roll_itr, backUpObj, result => {
+                    callBackCount++;
+                    logger.log("Building Response Progress: " + (callBackCount / totalCount) * 100 + "%");
+                    responseObject[roll_itr] = result
+                    if (callBackCount == totalCount) {
+                        resolve(sorted(responseObject));
+                    }
+                })
+            }
+        });
+    })
+}
+function sorted(jsonObj){
+    const sortedResult = Object.keys(jsonObj).sort().reduce((obj, key) => {
+        obj[key] = jsonObj[key];
+        return obj;
+    }, {});
+    return sortedResult;
 }
 async function sendResponse(semList, roll, backUp, callback) {
-    let responseObject = {};
-    let callBackCount = 0;
-    for (let i in semList) {
-        const sem = semList[i];
-        if (backUp[roll] && backUp[roll][sem] && !backUp[roll][sem].info) {
-            callBackCount++;
-            responseObject = backUp[roll];
-            if (callBackCount == semList.length) {
-                callback(responseObject);
+    const cookieJar = request.jar();
+    await exam.getCsrfToken(cookieJar).then(token => {
+        let responseObject = {};
+        let callBackCount = 0;
+        for (let i in semList) {
+            const sem = semList[i];
+            if (backUp[roll] && backUp[roll][sem] && !backUp[roll][sem].info) {
+                callBackCount++;
+                responseObject = backUp[roll];
+                if (callBackCount == semList.length) {
+                    callback(sorted(responseObject));
+                }
             }
-        }
-        else {
-            exam.getCsrfToken().then(token => {
-                exam.getMarkSheetPDF(token, sem, roll, (data) => {
+            else {
+                exam.getMarkSheetPDF(token, sem, roll, cookieJar, (data) => {
                     //await data.forEach(val => res.write(val + ",\n"))
                     callBackCount++;
                     logger.log("GETTING DATA FROM MAKAUT SERVER: ", sem, roll, token);
@@ -125,12 +165,12 @@ async function sendResponse(semList, roll, backUp, callback) {
                     //this.reinitCSRF();
                     //sendResponse([sem], roll, callback);
                     if (callBackCount == semList.length) {
-                        callback(responseObject);
+                        callback(sorted(responseObject));
                     }
                 });
-            });
+            }
         }
-    }
+    });
 }
 app.get('/restart', function (req, res, next) {
     process.exit(1);
