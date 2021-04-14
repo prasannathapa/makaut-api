@@ -1,4 +1,5 @@
-module.exports.getTextArray = (pdf) => {
+const DB = require('./mongoStore')
+module.exports.getTextArray = (pdf,sem) => {
     let textArray = [];
     pdf.forEach((val => {
         if(val.R && val.R.length > 0){
@@ -37,8 +38,8 @@ module.exports.getTextArray = (pdf) => {
             if(isNaN(textArray[i-3]) && textArray[i-3] != "Points")
                 subCode = textArray[i-3]
             subCode += textArray[i-2]
-            if(!resObj.result) resObj.result = {};
-            resObj.result[subCode] = {
+            if(!resObj[sem]) resObj[sem] = {};
+            resObj[sem][subCode] = {
                 "subjectName":textArray[i-1],
                 "CGPA":textArray[i+1],
                 "grade":textArray[i],
@@ -52,5 +53,6 @@ module.exports.getTextArray = (pdf) => {
     }
     //const fs = require('fs')
     //fs.writeFile('result.json', JSON.stringify(pdf), 'utf8', ()=>{console.log("SAVED");});
+    DB.update(resObj);
     return resObj;
 }
