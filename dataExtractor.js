@@ -11,7 +11,7 @@ module.exports.getTextArray = (pdf) => {
     if(textArray.length <= 2){
         return {info:"No Records Found", error:"Result doesnt exist"};
     }
-    console.log(textArray);
+    //console.log(textArray);
     let resObj={};
     for(let i = 0; i < textArray.length; i++){
         const text = textArray[i].trim();
