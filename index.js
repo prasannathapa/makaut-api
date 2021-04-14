@@ -8,6 +8,10 @@ let csrfToken = { id: null, count: 0 }
 const port = process.env.PORT || 8080;
 const timeout = 29000;
 const app = express();
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    next();
+});
 app.get('/', function (req, res) {
     res.statusCode = 302;
     res.setHeader('Location', 'https://github.com/prasannathapa/makaut-api/blob/master/README.md');
@@ -24,7 +28,7 @@ app.get('/:roll/:sem', function (req, res) {
     sendSingleResponse(roll, sem).then(responseObject => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(responseObject, null, 2));
-    }).catch(responseObject =>{
+    }).catch(responseObject => {
         res.writeHead(206, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(responseObject, null, 2));
     });
@@ -126,7 +130,7 @@ async function sendRangeResponse(sem, rollBeg, rollEnd) {
         });
     })
 }
-function sorted(jsonObj){
+function sorted(jsonObj) {
     const sortedResult = Object.keys(jsonObj).sort().reduce((obj, key) => {
         obj[key] = jsonObj[key];
         return obj;
