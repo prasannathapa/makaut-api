@@ -42,7 +42,6 @@ app.get('/analytics/:roll/:sem', function (req, res) {
         return;
     }
     sem = check.getSem(sem);
-    //logger.log('SWE')
     sendSingleResponse(roll, sem)
         .then(responseObject => {
             DB.fetchMyAss(responseObject, analObj => {
@@ -223,16 +222,3 @@ module.exports.reinitCSRF = async function reinitCSRF() {
     csrfToken = { id: null, count: 0 };
     csrfToken.id = await exam.getCsrfToken();
 }
-//{_id:{$gte:10500218020},SM01:{$exists:true},SM02:{$exists:true},SM03:{$exists:true},SM04:{$exists:true}}
-/*
-{$and:[
-  {'SM02':{$exists:true}},
-  {'SM02.BSCH201':{$exists:true}},
-  {'SM02.BSM201':{$exists:true}},
-  {'SM02.ESCS201':{$exists:true}},
-  {'SM02.HMHU201':{$exists:true}},
-  {'SM02.BSCH291':{$exists:true}},
-  {'SM02.ESCS291':{$exists:true}},
-  {'SM02.ESME291':{$exists:true}},
-  {'SM02.HMHU291':{$exists:true}}
-]}*/
