@@ -28,3 +28,4 @@ module.exports.getSemInv = sem => {
     });
     return semList;
 }
+module.exports.semList = sems;

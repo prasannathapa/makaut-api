@@ -1,13 +1,14 @@
 const express = require('./node_modules/express')
 const check = require('./validator');
 const exam = require('./exam');
-const DB = require('./mongoStore');
+const { MongoStore } = require('./mongoStore');
 const { logger } = require('./logger');
 const request = require('request');
 let csrfToken = { id: null, count: 0 }
 const port = process.env.PORT || 8080;
 const timeout = 29000;
 const app = express();
+const DB = new MongoStore();
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     next();
@@ -33,6 +34,27 @@ app.get('/:roll/:sem', function (req, res) {
         res.end(JSON.stringify(responseObject, null, 2));
     });
 });
+app.get('/analytics/:roll/:sem', function (req, res) {
+    let roll = req.params.roll;
+    let sem = req.params.sem;
+    if (!check.isRoll(roll) || !check.isSem(sem)) {
+        res.end();
+        return;
+    }
+    sem = check.getSem(sem);
+    logger.log('SWE')
+    sendSingleResponse(roll, sem)
+        .then(responseObject => {
+            DB.fetchMyAss(responseObject, analObj => {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(analObj, null, 2));
+            });
+        }).catch(responseObject => {
+            res.writeHead(206, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(responseObject, null, 2));
+        });
+
+});
 async function sendSingleResponse(roll, sem) {
     return new Promise((resolve, reject) => {
         logger.log("GET REQ Roll:[", roll, "]", "sem:", sem)
@@ -48,7 +70,7 @@ async function sendSingleResponse(roll, sem) {
             };
             reject(backUpObj);
         }, timeout);
-        DB.fetch(parseInt(roll), sem, gradeCard => {
+        DB.fetch(parseInt(roll), sem).then(gradeCard => {
             backUpObj[roll] = gradeCard;
             sem.forEach(s => {
                 if (backUpObj[roll][s])
@@ -57,11 +79,13 @@ async function sendSingleResponse(roll, sem) {
             logger.log("Initial Req Size:[", sem.length, "] backup data:[", reqSaved, "]\n" +
                 "New Request Size:[", sem.length - reqSaved, "]  effeciency: ", (reqSaved / sem.length) * 100 + "%");
             sendResponse(sem, roll, backUpObj, responseObject => resolve(sorted(responseObject)));
+        }).catch(()=>{
+            reject({info:"something went wrong", error:"idk"})
         });
     });
 
 }
-app.get('/:rollbeg/:rollend/:sem', function (req, res) {
+app.get('/:rollbeg/:rollend/:sem', function (req, res, next) {
     let rollBeg = req.params.rollbeg;
     let rollEnd = req.params.rollend;
     let sem = req.params.sem;
@@ -70,7 +94,6 @@ app.get('/:rollbeg/:rollend/:sem', function (req, res) {
     if (rollBeg > rollEnd)
         [rollBeg, rollEnd] = [rollEnd, rollBeg]
     if (!check.isRoll(rollBeg) || !check.isRoll(rollEnd) || (rollEnd - rollBeg) > 120 || !check.isSem(sem)) {
-        res.end();
         return;
     }
     sem = check.getSem(sem);
@@ -83,7 +106,7 @@ app.get('/:rollbeg/:rollend/:sem', function (req, res) {
             res.end(JSON.stringify(responseObject, null, 3));
         }).catch((responseObject) => {
             res.writeHead(206, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(responseObject, null, 3));
+            res.end(JSON.stringify(sorted(responseObject), null, 3));
         });
 });
 async function sendRangeResponse(sem, rollBeg, rollEnd) {
@@ -176,13 +199,20 @@ async function sendResponse(semList, roll, backUp, callback) {
         }
     });
 }
-app.get('/restart', function (req, res, next) {
+
+
+app.get('/restart', function (req, res) {
     process.exit(1);
 });
 app.get('/reset', function (req, res) {
     csrfToken = { id: null, count: 0 };
     logger.log(csrfToken)
     res.send("Done! " + csrfToken);
+});
+app.use(function (req, res) {
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end("{error:\"Cannot process your request\", info:\"Invalid Query\"}");
 });
 app.listen(port, () => {
     logger.log("server started at http://localhost:" + port);
@@ -195,3 +225,16 @@ module.exports.reinitCSRF = async function reinitCSRF() {
     csrfToken = { id: null, count: 0 };
     csrfToken.id = await exam.getCsrfToken();
 }
+//{_id:{$gte:10500218020},SM01:{$exists:true},SM02:{$exists:true},SM03:{$exists:true},SM04:{$exists:true}}
+/*
+{$and:[
+  {'SM02':{$exists:true}},
+  {'SM02.BSCH201':{$exists:true}},
+  {'SM02.BSM201':{$exists:true}},
+  {'SM02.ESCS201':{$exists:true}},
+  {'SM02.HMHU201':{$exists:true}},
+  {'SM02.BSCH291':{$exists:true}},
+  {'SM02.ESCS291':{$exists:true}},
+  {'SM02.ESME291':{$exists:true}},
+  {'SM02.HMHU291':{$exists:true}}
+]}*/
