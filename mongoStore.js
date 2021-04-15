@@ -2,16 +2,16 @@ const { MongoClient } = require('mongodb');
 const { logger } = require('./logger');
 const { getSemInv, semList } = require('./validator');
 class MongoStore {
-    uri = process.env.MONGO_URL;
     client;
     gradeDB;
     constructor() {
         this.init();
     }
     async init() {
+        const uri = process.env.MONGO_URL;
         if (this.client && this.client.isConnected())
             return true;
-        this.client = new MongoClient(this.uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        this.client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
         try {
             await this.client.connect();
             this.gradeDB = this.client.db("makautdb").collection("gradecard");
