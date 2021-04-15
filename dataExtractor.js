@@ -60,6 +60,6 @@ module.exports.getTextArray = (pdf,sem) => {
     //const fs = require('fs')
     //fs.writeFile('result.json', JSON.stringify(pdf), 'utf8', ()=>{console.log("SAVED");});
     DB.update(resObj);
-    DB.close();
+    //DB.close();
     return resObj;
 }
