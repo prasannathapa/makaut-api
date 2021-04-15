@@ -41,7 +41,7 @@ class MongoStore {
                 })
                 .catch(error => {
                     console.error(error);
-                    resolve({});
+                    resolve([]);
                 });
         })
     }
