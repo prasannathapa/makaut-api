@@ -1,7 +1,8 @@
-const DB = require('./mongoStore')
+const {MongoStore} = require('./mongoStore')
 const { logger } = require('./logger');
 
 module.exports.getTextArray = (pdf,sem) => {
+    const DB = new MongoStore();
     let textArray = [];
     pdf.forEach((val => {
         if(val.R && val.R.length > 0){
@@ -56,8 +57,9 @@ module.exports.getTextArray = (pdf,sem) => {
             resObj.collegeName = textArray[i].substring("College / Institution".length).trim();
         }
     }
-    const fs = require('fs')
-    fs.writeFile('result.json', JSON.stringify(pdf), 'utf8', ()=>{console.log("SAVED");});
+    //const fs = require('fs')
+    //fs.writeFile('result.json', JSON.stringify(pdf), 'utf8', ()=>{console.log("SAVED");});
     DB.update(resObj);
+    DB.close();
     return resObj;
 }
