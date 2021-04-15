@@ -42,7 +42,6 @@ app.get('/analytics/:roll/:sem', function (req, res) {
         return;
     }
     sem = check.getSem(sem);
-    logger.log('SWE')
     sendSingleResponse(roll, sem)
         .then(responseObject => {
             DB.fetchMyAss(responseObject, analObj => {
@@ -79,8 +78,6 @@ async function sendSingleResponse(roll, sem) {
             logger.log("Initial Req Size:[", sem.length, "] backup data:[", reqSaved, "]\n" +
                 "New Request Size:[", sem.length - reqSaved, "]  effeciency: ", (reqSaved / sem.length) * 100 + "%");
             sendResponse(sem, roll, backUpObj, responseObject => resolve(sorted(responseObject)));
-        }).catch(()=>{
-            reject({info:"something went wrong", error:"idk"})
         });
     });
 
