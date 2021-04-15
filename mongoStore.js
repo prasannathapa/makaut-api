@@ -76,7 +76,7 @@ class MongoStore {
                 callback([]);
             });
     }
-    async fetchMyAss(resultObject, callback) {
+    async fetchAnalytics(resultObject, callback) {
         if (!this.client || !this.client.isConnected())
             await this.init();
 
@@ -87,14 +87,19 @@ class MongoStore {
 
         for (let key in resultObject) {
             if (semList.includes(key)) {
+                
                 for (let subCode in resultObject[key]) {
                     //logger.log(subCode);
-                    await this.countDistintMarks(key, subCode).then(data=>{
-                        resObj[subCode] = data;
-                        //logger.log(data)
-                    }).catch(err=>{
-                        resObj[subCode] = data;
-                    })
+                    if(subCode !== "info"){
+                        if(!resObj[key]) 
+                            resObj[key]={};
+                        await this.countDistintMarks(key, subCode).then(data=>{
+                            resObj[key][subCode] = data;
+                            //logger.log(data)
+                        }).catch(info => {
+                            resObj[key][subCode] = info;
+                        })
+                    }
                 }
             }
         }
@@ -109,7 +114,7 @@ class MongoStore {
                 { $group: { _id: '$' + semCode + '.' + subCode + '.CGPA', count: { $sum: 1 } } },
                 { $project: { _id: 0, CGPA: '$_id', count: 1 } }
             ]).toArray(function (err, data) {
-                err ? reject([]) : resolve(data);
+                err ? reject({}) : resolve(data);
             });
         });
     }

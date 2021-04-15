@@ -44,7 +44,7 @@ app.get('/analytics/:roll/:sem', function (req, res) {
     sem = check.getSem(sem);
     sendSingleResponse(roll, sem)
         .then(responseObject => {
-            DB.fetchMyAss(responseObject, analObj => {
+            DB.fetchAnalytics(responseObject, analObj => {
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(analObj, null, 2));
             });
