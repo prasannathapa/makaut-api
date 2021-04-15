@@ -70,7 +70,7 @@ async function sendSingleResponse(roll, sem) {
             };
             reject(backUpObj);
         }, timeout);
-        DB.fetch(parseInt(roll), sem).then(gradeCard => {
+        DB.fetch(parseInt(roll), sem, gradeCard => {
             backUpObj[roll] = gradeCard;
             sem.forEach(s => {
                 if (backUpObj[roll][s])
@@ -79,8 +79,6 @@ async function sendSingleResponse(roll, sem) {
             logger.log("Initial Req Size:[", sem.length, "] backup data:[", reqSaved, "]\n" +
                 "New Request Size:[", sem.length - reqSaved, "]  effeciency: ", (reqSaved / sem.length) * 100 + "%");
             sendResponse(sem, roll, backUpObj, responseObject => resolve(sorted(responseObject)));
-        }).catch((err)=>{
-            reject({info:"something went wrong", error:err.toString()})
         });
     });
 
