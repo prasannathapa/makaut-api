@@ -2,7 +2,7 @@ const { MongoClient } = require('mongodb');
 const { logger } = require('./logger');
 const { getSemInv, semList } = require('./validator');
 class MongoStore {
-    uri = "mongodb+srv://snowfox:WxiEseAAYgFnyFuG@snowfox.2wc0z.gcp.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";//process.env.MONGO_URL;
+    uri = process.env.MONGO_URL;
     client;
     gradeDB;
     constructor() {
