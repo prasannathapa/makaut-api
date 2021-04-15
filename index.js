@@ -42,7 +42,6 @@ app.get('/analytics/:roll/:sem', function (req, res) {
         return;
     }
     sem = check.getSem(sem);
-    logger.log('SWE')
     sendSingleResponse(roll, sem)
         .then(responseObject => {
             DB.fetchMyAss(responseObject, analObj => {
