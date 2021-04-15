@@ -79,8 +79,6 @@ async function sendSingleResponse(roll, sem) {
             logger.log("Initial Req Size:[", sem.length, "] backup data:[", reqSaved, "]\n" +
                 "New Request Size:[", sem.length - reqSaved, "]  effeciency: ", (reqSaved / sem.length) * 100 + "%");
             sendResponse(sem, roll, backUpObj, responseObject => resolve(sorted(responseObject)));
-        }).catch(()=>{
-            reject({info:"something went wrong", error:"idk"})
         });
     });
 
