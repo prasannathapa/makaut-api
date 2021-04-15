@@ -25,27 +25,24 @@ class MongoStore {
         await this.client.close();
         this.client = null;
     }
-    async fetch(roll, sems) {
+    async fetch(roll, sems, callback) {
         if (!this.client || !this.client.isConnected())
             await this.init();
-        return new Promise((resolve, reject) => {
-            let proj = { '_id': 0 }
-            const invSem = getSemInv(sems)
-            for (let i = 0; i < invSem.length; i++) {
-                proj[invSem[i]] = 0;
-            }
-            this.gradeDB.findOne({ '_id': roll }, { projection: proj })
-                .then(results => {
-                    // console.log(results)
-                    resolve(results);
-                })
-                .catch(error => {
-                    console.error(error);
-                    resolve([]);
-                });
-        })
+        let proj = { '_id': 0 }
+        const invSem = getSemInv(sems)
+        for (let i = 0; i < invSem.length; i++) {
+            proj[invSem[i]] = 0;
+        }
+        this.gradeDB.findOne({ '_id': roll }, { projection: proj })
+            .then(results => {
+                // console.log(results)
+                callback(results);
+            })
+            .catch(error => {
+                console.error(error);
+                callback([]);
+            });
     }
-
     async update(jsonObj) {
         if (!this.client || !this.client.isConnected())
             await this.init();
