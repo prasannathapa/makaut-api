@@ -8,7 +8,7 @@ class MongoStore {
         this.init();
     }
     async init() {
-        const uri = process.env.MONGO_URL || "mongodb+srv://snowfox:SZFxxCLPiUoX3i1t@snowfox.2wc0z.gcp.mongodb.net/myFirstDatabase?retryWrites=true&w=majority" ;
+        const uri = process.env.MONGO_URL;
         if (this.client && this.client.isConnected())
             return true;
         this.client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
