@@ -8,7 +8,7 @@ class MongoStore {
         this.init();
     }
     async init() {
-        const uri = process.env.MONGO_URL;
+        const uri = process.env.MONGO_URL || "mongodb+srv://snowfox:SZFxxCLPiUoX3i1t@snowfox.2wc0z.gcp.mongodb.net/myFirstDatabase?retryWrites=true&w=majority" ;
         if (this.client && this.client.isConnected())
             return true;
         this.client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -32,6 +32,7 @@ class MongoStore {
         const invSem = getSemInv(sems)
         for (let i = 0; i < invSem.length; i++) {
             proj[invSem[i]] = 0;
+            proj['results.'+invSem[i]] = 0;
         }
         this.gradeDB.findOne({ '_id': roll }, { projection: proj })
             .then(results => {
@@ -43,11 +44,21 @@ class MongoStore {
                 callback([]);
             });
     }
-    async update(jsonObj) {
+    async update(jsonObj,sem) {
         if (!this.client || !this.client.isConnected())
             await this.init();
         await this.gradeDB.
-            updateOne({ '_id': parseInt(jsonObj.roll) }, { $set: jsonObj }, { upsert: true }, (err, res) => {
+            updateOne({ '_id': parseInt(jsonObj.roll) }, 
+            { $set: {
+                name:jsonObj.name,
+                roll:jsonObj.roll,
+                collegeName:jsonObj.collegeName,
+                registration:jsonObj.registration,
+                ['results.'+sem]:jsonObj.results[sem],
+                [sem]: jsonObj[sem]
+            } }, 
+            { upsert: true }, 
+            (err, res) => {
                 //console.log(res);
             })
     }
@@ -58,6 +69,7 @@ class MongoStore {
         const invSem = getSemInv(sems)
         for (let i = 0; i < invSem.length; i++) {
             proj[invSem[i]] = 0;
+            proj['results.'+invSem[i]] = 0;
         }
         await this.gradeDB.find(
             {

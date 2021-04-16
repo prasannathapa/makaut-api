@@ -167,6 +167,8 @@ async function sendResponse(semList, roll, backUp, callback) {
             if (backUp[roll] && backUp[roll][sem] && !backUp[roll][sem].info) {
                 callBackCount++;
                 responseObject = backUp[roll];
+                if(responseObject.results)
+                    responseObject.results = sorted(responseObject.results)
                 if (callBackCount == semList.length) {
                     callback(sorted(responseObject));
                 }
@@ -181,6 +183,10 @@ async function sendResponse(semList, roll, backUp, callback) {
                     if (data.roll && !responseObject.roll) responseObject.roll = data.roll;
                     if (data.registration && !responseObject.registration) responseObject.registration = data.registration;
                     if (data.collegeName && !responseObject.collegeName) responseObject.collegeName = data.collegeName;
+                    if (data.results && !responseObject.results) 
+                        responseObject.results = data.results;
+                    else if(responseObject.results && data.results)
+                        responseObject.results = Object.assign(responseObject.results, data.results);
                     if (!data.error)
                         responseObject[sem] = data[sem];
                     else
@@ -189,6 +195,8 @@ async function sendResponse(semList, roll, backUp, callback) {
                     //this.reinitCSRF();
                     //sendResponse([sem], roll, callback);
                     if (callBackCount == semList.length) {
+                        if(responseObject.results)
+                            responseObject.results = sorted(responseObject.results);
                         callback(sorted(responseObject));
                     }
                 });
