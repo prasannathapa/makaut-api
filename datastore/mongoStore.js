@@ -1,10 +1,16 @@
 const { MongoClient } = require('../node_modules/mongodb');
 const { logger } = require('../logger/logger');
 const { getSemInv, semList } = require('../utils/validator');
-let env = require('./env')
+const fs = require('fs')
+
+const path = '/mongoPassword.txt'
+
+
 let client, gradeDB;
 module.exports.init = async function init() {
-    const uri = process.env.MONGO_URL || env.mongoURL;
+    let mongoURL = "xxx";
+    try {mongoURL = fs.readFileSync(__dirname + path, 'utf8')} catch (err) {}
+    const uri = process.env.MONGO_URL || mongoURL;
     if (client && client.isConnected())
         return true;
     client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
