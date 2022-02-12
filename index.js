@@ -9,7 +9,16 @@ let csrfToken = { id: null, count: 0 }
 const port = process.env.PORT || 8080;
 const timeout = 29000;
 const app = express();
-
+process.on('exit', function () {
+    logger.log('About to exit.');
+    DB.close();
+    process.exit(1);
+});
+process.on('SIGINT', function () {
+    logger.log('About to exit.');
+    DB.close();
+    process.exit(1);
+});
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     next();
@@ -117,7 +126,7 @@ app.get('/analytics/college/:collegecode', function (req, res, next) {
     let collegeCode = req.params.collegecode;
     if (check.collegeCodes[collegeCode]) {
         logger.log("CollegeCode:[", collegeCode, "] CollegeName:[", check.collegeCodes[collegeCode], "] sending report")
-        getCollegeAnalytics(collegeCode, data =>{
+        getCollegeAnalytics(collegeCode, data => {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(data));
         });
