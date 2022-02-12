@@ -27,7 +27,7 @@ function solveCollegeData(data) {
             let hasBackLogs = false;
             if (semList.includes(sem)) {
                 if (!resultObj.studentCount[batch][course][sem])
-                    resultObj.studentCount[batch][course][sem] = {"pass": 0, "fail": 0, "total": 0 };
+                    resultObj.studentCount[batch][course][sem] = { "pass": 0, "fail": 0, "total": 0 };
                 resultObj.studentCount[batch][course][sem].total++;
                 for (let subjects in student[sem]) {
                     if (!resultObj.data[batch][course][sem])
@@ -83,8 +83,10 @@ function solveCollegeData(data) {
             for (let sem in resultObj.data[batch][course]) {
                 for (let subject in resultObj.data[batch][course][sem]) {
                     let averageCGPA = resultObj.data[batch][course][sem][subject].cgpa.reduce((acc, v, i, a) => (acc + v / a.length), 0);
+                    let standardDeviation = Math.sqrt(array.map(x => Math.pow(x - averageCGPA, 2)).reduce((a, b) => a + b) / n)
                     delete resultObj.data[batch][course][sem][subject].cgpa;
                     resultObj.data[batch][course][sem][subject].averageCGPA = averageCGPA.toFixed(2);
+                    resultObj.data[batch][course][sem][subject].standardDeviation = standardDeviation.toFixed(2);
                 }
             }
             resultObj.data[batch][course] = Object.keys(resultObj.data[batch][course]).sort().reduce(
