@@ -86,8 +86,8 @@ function solveCollegeData(data) {
                     const averageCGPA = array.reduce((acc, v, i, a) => (acc + v / a.length), 0);
                     const standardDeviation = Math.sqrt(array.map(x => Math.pow(x - averageCGPA, 2)).reduce((a, b) => a + b) / array.length)
                     delete resultObj.data[batch][course][sem][subject].cgpa;
-                    resultObj.data[batch][course][sem][subject].averageCGPA = averageCGPA.toFixed(2);
-                    resultObj.data[batch][course][sem][subject].standardDeviation = standardDeviation.toFixed(2);
+                    resultObj.data[batch][course][sem][subject].averageCGPA = parseFloat(averageCGPA.toFixed(2));
+                    resultObj.data[batch][course][sem][subject].standardDeviation = parseFloat(standardDeviation.toFixed(2));
                 }
             }
             resultObj.data[batch][course] = Object.keys(resultObj.data[batch][course]).sort().reduce(
