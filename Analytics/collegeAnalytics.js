@@ -21,12 +21,14 @@ function solveCollegeData(data) {
         if (!resultObj.studentCount[batch])
             resultObj.studentCount[batch] = {};
         if (!resultObj.studentCount[batch][course])
-            resultObj.studentCount[batch][course] = { "pass": 0, "fail": 0, "total": 0 };
+            resultObj.studentCount[batch][course] = {};
 
-        resultObj.studentCount[batch][course].total++;
-        let hasBackLogs = false;
         for (let sem in student) {
+            let hasBackLogs = false;
             if (semList.includes(sem)) {
+                if (!resultObj.studentCount[batch][course][sem])
+                    resultObj.studentCount[batch][course][sem] = {"pass": 0, "fail": 0, "total": 0 };
+                resultObj.studentCount[batch][course][sem].total++;
                 for (let subjects in student[sem]) {
                     if (!resultObj.data[batch][course][sem])
                         resultObj.data[batch][course][sem] = [];
@@ -42,7 +44,7 @@ function solveCollegeData(data) {
                             resultObj.data[batch][course][sem][i].lowestCGPA =
                                 Math.min(resultObj.data[batch][course][sem][i].lowestCGPA, cgpa);
 
-                            if (cgpa < 4) {
+                            if (cgpa <= 2) {
                                 hasBackLogs = true;
                                 resultObj.data[batch][course][sem][i].fail++;
                             }
@@ -64,17 +66,17 @@ function solveCollegeData(data) {
                             "lowestCGPA": cgpa,
                             "cgpa": [cgpa]
                         });
-                        if (cgpa < 4)
+                        if (cgpa <= 2)
                             hasBackLogs = true;
                         resultObj.subjectMap[subjects] = student[sem][subjects].subjectName;
                     }
                 }
+                if (!hasBackLogs)
+                    resultObj.studentCount[batch][course][sem].pass++;
+                else
+                    resultObj.studentCount[batch][course][sem].fail++;
             }
         }
-        if (!hasBackLogs)
-            resultObj.studentCount[batch][course].pass++;
-        else
-            resultObj.studentCount[batch][course].fail++;
     }
     for (let batch in resultObj.data) {
         for (let course in resultObj.data[batch]) {
