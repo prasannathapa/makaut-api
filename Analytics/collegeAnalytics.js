@@ -79,10 +79,10 @@ function solveCollegeData(data) {
     for (let batch in resultObj.data) {
         for (let course in resultObj.data[batch]) {
             for (let sem in resultObj.data[batch][course]) {
-                for (let subject in resultObj.data[batch][sem]) {
-                    let averageCGPA = resultObj.data[batch][sem][subject].cgpa.reduce((acc, v, i, a) => (acc + v / a.length), 0);
-                    delete resultObj.data[batch][sem][subject].cgpa;
-                    resultObj.data[batch][sem][subject].averageCGPA = averageCGPA;
+                for (let subject in resultObj.data[batch][course][sem]) {
+                    let averageCGPA = resultObj.data[batch][course][sem][subject].cgpa.reduce((acc, v, i, a) => (acc + v / a.length), 0);
+                    delete resultObj.data[batch][course][sem][subject].cgpa;
+                    resultObj.data[batch][course][sem][subject].averageCGPA = averageCGPA;
                 }
             }
             resultObj.data[batch][course] = Object.keys(resultObj.data[batch][course]).sort().reduce(
