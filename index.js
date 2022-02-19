@@ -5,6 +5,8 @@ const DB = require('./datastore/mongoStore')
 const { logger } = require('./logger/logger');
 const request = require('request');
 const { getCollegeAnalytics } = require('./Analytics/collegeAnalytics');
+const e = require('express');
+const { getSubjectAnalytics } = require('./Analytics/subjectAnalytics');
 let csrfToken = { id: null, count: 0 }
 const port = process.env.PORT || 8080;
 const timeout = 29000;
@@ -24,7 +26,8 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     next();
 });
-app.get('/', function (req, res) {
+app.use(express.json());
+app.use(express.urlencoded({ extended: true })); app.get('/', function (req, res) {
     res.statusCode = 302;
     res.setHeader('Location', 'https://github.com/prasannathapa/makaut-api/blob/master/README.md');
     return res.end();
@@ -135,6 +138,23 @@ app.get('/analytics/college/:collegecode', function (req, res, next) {
         next();
     }
 });
+app.post('/subjectReport', function (req, res, next) {
+    let subCode = req.body.subCode;
+    let semNo = req.body.sem;
+    if (!semNo || !subCode) {
+        next();
+        return;
+    }
+    if (check.semList.includes(semNo) && check.subjectCodes.includes(subCode)) {
+        getSubjectAnalytics(subCode, semNo, data => {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(data));
+        })
+    } else {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ info: "Subject - Semester combination not found" }));
+    }
+})
 app.get('/:rollbeg/:rollend/:sem', function (req, res, next) {
     let rollBeg = req.params.rollbeg;
     let rollEnd = req.params.rollend;
@@ -179,11 +199,11 @@ async function sendRangeResponse(sem, rollBeg, rollEnd) {
         }, timeout);
         DB.fetchRange(rollBeg, rollEnd, sem, data => {
             //GET BACKUP DATA
-            for (let itr = 0; itr < data.length; itr++) {
-                const gradeCard = data[itr];
+            for (let item of data) {
+                const gradeCard = item;
                 backUpObj[gradeCard.roll] = gradeCard;
                 sem.forEach(s => {
-                    if (data[itr][s])
+                    if (item[s])
                         reqSaved++;
                 });
             }
@@ -264,9 +284,9 @@ app.get('/restart', function (req, res) {
     process.exit(1);
 });
 
-app.get('/subjectCodes',function (req, res) {
+app.get('/subjectCodes', function (req, res) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end("{subjectCodes:"+JSON.stringify(check.subjectCodes)+"}");
+    res.end("{subjectCodes:" + JSON.stringify(check.subjectCodeMap) + "}");
 })
 app.use(function (req, res) {
     res.writeHead(200, { 'Content-Type': 'application/json' });

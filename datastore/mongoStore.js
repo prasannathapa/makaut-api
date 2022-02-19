@@ -7,32 +7,37 @@ const path = '/mongoPassword.txt'
 
 
 let client, gradeDB;
+let attemptToConnect = false;
 module.exports.init = async function init() {
-    let mongoURL = "xxx";
-    try {mongoURL = fs.readFileSync(__dirname + path, 'utf8')} catch (err) {}
-    const uri = process.env.MONGO_URL || mongoURL;
-    if (client && client.isConnected())
+    if (!attemptToConnect) {
+        attemptToConnect = true;
+        let mongoURL = "xxx";
+        try { mongoURL = fs.readFileSync(__dirname + path, 'utf8') } catch (err) { }
+        const uri = process.env.MONGO_URL || mongoURL;
+        if (client && client.isConnected())
+            return true;
+        client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        try {
+            await client.connect();
+            logger.log("CONNECTION CONNECTED!!!!!!!!!!!!!!!!!!!!")
+            gradeDB = client.db("makautdb").collection("gradecard");
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
         return true;
-    client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-    try {
-        await client.connect();
-        logger.log("CONNECTION CONNECTED!!!!!!!!!!!!!!!!!!!!")
-        gradeDB = client.db("makautdb").collection("gradecard");
-    } catch (e) {
-        console.error(e);
-        return false;
     }
-    return true;
 }
 module.exports.close = async function close() {
     await client.close();
     client = null;
     logger.log("XXXXXX DISCONNECTED XXXXX")
+    attemptToConnect = false;
 }
 module.exports.fetch = async function fetch(roll, sems, callback) {
     if (!client || !client.isConnected())
         await this.init();
-    
+
     let proj = { '_id': 0 }
     const invSem = getSemInv(sems)
     for (let i of invSem) {
@@ -52,7 +57,7 @@ module.exports.fetch = async function fetch(roll, sems, callback) {
 module.exports.update = async function update(jsonObj, sem) {
     if (!client || !client.isConnected())
         await this.init();
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
         gradeDB.
             updateOne({ '_id': parseInt(jsonObj.roll) },
                 {
@@ -66,7 +71,7 @@ module.exports.update = async function update(jsonObj, sem) {
                     }
                 },
                 { upsert: true },
-                (err, res) => {
+                (_err, _res) => {
                     //console.log(res);
                 }).then(resolve()).catch(resolve());
     })
@@ -124,7 +129,7 @@ module.exports.countDistintCGPA = async function countDistintCGPA(courseCode, se
     /*logger.log(JSON.stringify({ roll: { $regex: '...' + courseCode + '....' } }))
     logger.log(JSON.stringify({ $group: { _id: '$results.' + semCode, count: { $sum: 1 } } }))
     logger.log(JSON.stringify({ $project: { _id: 0, CGPA: '$_id', count: 1 } }))*/
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
         gradeDB.aggregate([{
             $match: {
                 roll: { $regex: '...' + courseCode + '....' },
@@ -181,12 +186,23 @@ module.exports.countDistintMarks = async function countDistintMarks(semCode, sub
     });
 }
 
-module.exports.getData = async function getData(projection, filter) {
+module.exports.getData = async function getData(projection, filter, aggregate) {
     if (!client || !client.isConnected())
         await this.init();
-    return new Promise((resolve, reject) => {
-        gradeDB.find(filter, { projection: projection }).toArray().then((result) => {
-            resolve(result);
+    if (!aggregate)
+        return new Promise((resolve, _reject) => {
+            gradeDB.find(filter, { projection: projection }).toArray().then((result) => {
+                resolve(result);
+            }).catch(err => {
+                logger.log(err);
+            });
         });
-    });
+    else
+        return new Promise((resolve, _reject) => {
+            gradeDB.aggregate(aggregate)
+                .toArray().then(res => { resolve(res) }).catch(err => {
+                    logger.log(err);
+                    reject();
+                });
+        });
 }
