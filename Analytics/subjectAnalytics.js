@@ -17,8 +17,24 @@ const process = (data) => {
             let cgpa = resObj[college][batch].CGPA_DATA;
             let avg = cgpa.reduce((acc, v, i, a) => (acc + v / a.length), 0);
             let sd = Math.sqrt(cgpa.map(x => Math.pow(x - avg, 2)).reduce((a, b) => a + b) / cgpa.length);
-            resObj[college][batch].AVERAGE_CGPA = avg.toFixed(2)*1;
-            resObj[college][batch].STANDARD_DEVIATION =  sd.toFixed(2)*1;
+            resObj[college][batch].AVERAGE_CGPA = avg.toFixed(2) * 1;
+            resObj[college][batch].STANDARD_DEVIATION = sd.toFixed(2) * 1;
+            let cgpa_processed = [
+                { CGPA: "1", count: 0 },
+                { CGPA: "2", count: 0 },
+                { CGPA: "3", count: 0 },
+                { CGPA: "4", count: 0 },
+                { CGPA: "5", count: 0 },
+                { CGPA: "6", count: 0 },
+                { CGPA: "7", count: 0 },
+                { CGPA: "8", count: 0 },
+                { CGPA: "9", count: 0 },
+                { CGPA: "10", count: 0 },
+            ]
+            for (let i of cgpa) {
+                cgpa_processed[i - 1].count++;
+            }
+            resObj[college][batch].CGPA_DATA = cgpa_processed;
         }
     return resObj;
 }
