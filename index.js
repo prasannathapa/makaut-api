@@ -9,6 +9,7 @@ let csrfToken = { id: null, count: 0 }
 const port = process.env.PORT || 8080;
 const timeout = 29000;
 const app = express();
+DB.init();
 process.on('exit', function () {
     logger.log('About to exit.');
     DB.close();

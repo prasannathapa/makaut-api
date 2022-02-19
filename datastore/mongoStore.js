@@ -32,11 +32,12 @@ module.exports.close = async function close() {
 module.exports.fetch = async function fetch(roll, sems, callback) {
     if (!client || !client.isConnected())
         await this.init();
+    
     let proj = { '_id': 0 }
     const invSem = getSemInv(sems)
-    for (let i = 0; i < invSem.length; i++) {
-        proj[invSem[i]] = 0;
-        proj['results.' + invSem[i]] = 0;
+    for (let i of invSem) {
+        proj[i] = 0;
+        proj['results.' + i] = 0;
     }
     gradeDB.findOne({ '_id': roll }, { projection: proj })
         .then(results => {
@@ -75,9 +76,9 @@ module.exports.fetchRange = async function fetchRange(start, end, sems, callback
         await this.init();
     let proj = { '_id': 0 }
     const invSem = getSemInv(sems)
-    for (let i = 0; i < invSem.length; i++) {
-        proj[invSem[i]] = 0;
-        proj['results.' + invSem[i]] = 0;
+    for (let i of invSem) {
+        proj[i] = 0;
+        proj['results.' + i] = 0;
     }
     await gradeDB.find(
         {
@@ -188,5 +189,4 @@ module.exports.getData = async function getData(projection, filter) {
             resolve(result);
         });
     });
-
 }
