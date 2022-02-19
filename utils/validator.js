@@ -1,21 +1,21 @@
-module.exports.isRoll = (num)=>{
+module.exports.isRoll = (num) => {
     return /^\d+$/.test(num);
 }
-module.exports.isSem = (num)=>{
+module.exports.isSem = (num) => {
     return /^([1-8]*|0)$/.test(num);
 }
-module.exports.isSemSingle = (num)=>{
+module.exports.isSemSingle = (num) => {
     return /^([1-8])$/.test(num);
 }
 const sems = ['SM01', 'SM02', 'SM03', 'SM04', 'SM05', 'SM06', 'SM07', 'SM08'];
 
-module.exports.getSem = sem =>{
-    if(sem == '0')
+module.exports.getSem = sem => {
+    if (sem == '0')
         return sems.slice();
     let semList = [];
     sem = new Set(sem);
     sem.forEach(value => {
-        semList.push(sems[value-1]);
+        semList.push(sems[value - 1]);
     });
     return semList;
 }
@@ -23,7 +23,7 @@ module.exports.getSemInv = sem => {
     let semList = [];
     sem = new Set(sem);
     sems.forEach(value => {
-        if(!sem.has(value))
+        if (!sem.has(value))
             semList.push(value);
     });
     return semList;
@@ -262,3 +262,81 @@ const cources = {
     "315": "B.Tech Computer Science & Design (CSD)",
 }
 module.exports.courceCodes = cources;
+
+const subCodes = ["BSCH101",
+    "BSCH191",
+    "BSM101",
+    "BSPH101",
+    "BSPH191",
+    "ESEE101",
+    "ESEE191",
+    "ESME191",
+    "ESME192",
+    "BSCH201",
+    "BSCH291",
+    "BSM201",
+    "BSPH201",
+    "BSPH291",
+    "ESCS201",
+    "ESCS291",
+    "ESME291",
+    "ESME292",
+    "HMHU201",
+    "HMHU291",
+    "BSC301",
+    "CH301",
+    "CS301",
+    "CS302",
+    "CS303",
+    "CS391",
+    "CS392",
+    "CS393",
+    "ES-CS391",
+    "ESC301",
+    "HSMC301",
+    "HU301",
+    "PCC-CS301",
+    "PCC-CS302",
+    "PCC-CS391",
+    "PCC-CS392",
+    "PCC-CS393",
+    "PH301",
+    "PH391",
+    "BSC 401",
+    "CS401",
+    "CS402",
+    "CS403",
+    "CS491",
+    "CS492",
+    "CS493",
+    "HU481",
+    "M401",
+    "MC401",
+    "MCS401",
+    "MCS491",
+    "PCC-CS401",
+    "PCC-CS402",
+    "PCC-CS403",
+    "PCC-CS404",
+    "PCC-CS492",
+    "PCC-CS494",
+    "CS501",
+    "CS502",
+    "CS503",
+    "CS504D",
+    "CS591",
+    "CS592",
+    "CS593",
+    "CS594D",
+    "HU501",
+    "CS601",
+    "CS602",
+    "CS603",
+    "CS604B",
+    "CS605A",
+    "CS681",
+    "CS691",
+    "CS692",
+    "CS693",
+    "HU601"] 
+module.exports.subjectCodes = subCodes;

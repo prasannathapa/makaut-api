@@ -264,10 +264,13 @@ app.get('/restart', function (req, res) {
     process.exit(1);
 });
 app.use(function (req, res) {
-
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end("{error:\"Cannot process your request\", info:\"Invalid Query\"}");
 });
+app.get('/subjectCodes',function (req, res) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end("{subjectCodes:"+JSON.stringify(check.subjectCodes)+"}");
+})
 app.listen(port, () => {
     logger.log("server started at http://localhost:" + port);
 });
