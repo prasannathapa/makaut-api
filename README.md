@@ -4,7 +4,7 @@ _____
 
 ### ![#f03c15](https://via.placeholder.com/15/f03c15/000000?text=+) [`MAKAUT RESULT API`](https://makaut-api.herokuapp.com/)
 
-![](./working.png)
+![](./docs/working.png)
 
 - It is a **NodeJS** based Grade Card API with **CSRF authentication bypassing** and **Result auto Caching functionality**. 
 
