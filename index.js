@@ -9,7 +9,7 @@ const e = require('express');
 const { getSubjectAnalytics } = require('./Analytics/subjectAnalytics');
 let csrfToken = { id: null, count: 0 }
 const port = process.env.PORT || 8080;
-const timeout = 29000;
+const timeout = process.env.TIMEOUT || 29000;
 const app = express();
 DB.init();
 process.on('exit', function () {
@@ -292,9 +292,10 @@ app.use(function (req, res) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end("{error:\"Cannot process your request\", info:\"Invalid Query\"}");
 });
-app.listen(port, () => {
+let server = app.listen(port, () => {
     logger.log("server started at http://localhost:" + port);
 });
+server.setTimeout(0);
 
 module.exports.resetCSRF = () => {
     csrfToken = { id: null, count: 0 };
