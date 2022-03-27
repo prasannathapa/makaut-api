@@ -225,11 +225,10 @@ async function sendRangeResponse(sem, rollBeg, rollEnd) {
     })
 }
 function sorted(jsonObj) {
-    const sortedResult = Object.keys(jsonObj).sort().reduce((obj, key) => {
+    return Object.keys(jsonObj).sort().reduce((obj, key) => {
         obj[key] = jsonObj[key];
         return obj;
     }, {});
-    return sortedResult;
 }
 async function sendResponse(semList, roll, backUp, callback) {
     const cookieJar = request.jar();
@@ -292,10 +291,9 @@ app.use(function (req, res) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end("{error:\"Cannot process your request\", info:\"Invalid Query\"}");
 });
-let server = app.listen(port, () => {
+app.listen(port, () => {
     logger.log("server started at http://localhost:" + port);
 });
-server.setTimeout(0);
 
 module.exports.resetCSRF = () => {
     csrfToken = { id: null, count: 0 };
