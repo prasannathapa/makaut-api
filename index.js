@@ -7,9 +7,13 @@ const request = require('request');
 const { getCollegeAnalytics } = require('./Analytics/collegeAnalytics');
 const e = require('express');
 const { getSubjectAnalytics } = require('./Analytics/subjectAnalytics');
+const { predArr } = require('./utils/predArr');
+const tf = require('@tensorflow/tfjs');
+const { response } = require('express');
+
 let csrfToken = { id: null, count: 0 }
 const port = process.env.PORT || 8080;
-const timeout = 29000;
+const timeout = process.env.TIMEOUT || 29000;
 const app = express();
 DB.init();
 process.on('exit', function () {
@@ -32,11 +36,11 @@ app.use(express.urlencoded({ extended: true })); app.get('/', function (req, res
     res.setHeader('Location', 'https://github.com/prasannathapa/makaut-api/blob/master/README.md');
     return res.end();
 });
-app.get('/:roll/:sem', function (req, res) {
+app.get('/:roll/:sem', function (req, res, next) {
     let roll = req.params.roll;
     let sem = req.params.sem;
     if (!check.isRoll(roll) || !check.isSem(sem)) {
-        res.end();
+        next();
         return;
     }
     sem = check.getSem(sem);
@@ -47,6 +51,74 @@ app.get('/:roll/:sem', function (req, res) {
         res.writeHead(206, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(responseObject, null, 2));
     });
+});
+
+app.get('/prediction/:roll', function (req, res, next) {
+    let roll = req.params.roll;
+    if (!check.isRoll(roll) && roll.length == 11) {
+        next();
+        return;
+    }
+    logger.log("Prediction on ", roll);
+    DB.fetch(parseInt(roll), check.semList, gradeCard => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        let studentArray = {}
+        logger.log(gradeCard)
+        for (let sem of check.semList) {
+            for (let subCode in gradeCard[sem]) {
+                studentArray[subCode] = parseInt(gradeCard[sem][subCode].CGPA)
+            }
+        }
+        let pred = {};
+        for (let model of predArr) {
+            let find = true;
+            let inp = [];
+            let arr = Object.keys(studentArray);
+            //logger.log(studentArray,arr)
+            if (arr.includes(model.subCode)) {
+                //find = false;
+            }
+            logger.log("Prediction on ", roll);
+
+            if (find) {
+                for (let subCodeInp of model.inputs) {
+                    if (arr.includes(subCodeInp)) {
+                        inp.push(studentArray[subCodeInp]);
+                    } else {
+                        find = false;
+                        break;
+                    }
+                }
+            }
+            if (find) {
+                tf.loadLayersModel(model.url).then(function (op) {
+                    //console.log(tf.tensor([6,8,9,10,10,10]).reshape([1,6]))
+                    op.predict(tf.tensor(
+                        [inp]
+                    )).array().then(function (scores) {
+                        if (!pred["SM0" + model.sem])
+                            pred["SM0" + model.sem] = {}
+                        pred["SM0" + model.sem][model.subCode] = {};
+                        pred["SM0" + model.sem][model.subCode].CGPA = Math.round(scores[0][0]);
+                        pred["SM0" + model.sem][model.subCode].subjectName = model.subName;
+                        pred["SM0" + model.sem][model.subCode].weightage = "1.0";
+                    }).catch(err => console.log(err));
+                });
+            }
+        }
+        setTimeout(() => {
+            if ("{}".localeCompare(JSON.stringify(pred))) {
+                pred.roll = gradeCard.roll;
+                pred.collegeName = gradeCard.collegeName;
+                pred.registration = gradeCard.registration;
+                pred.name = gradeCard.name;
+                res.end(JSON.stringify(pred, null, 2));
+
+            } else {
+                res.end(JSON.stringify(pred, null, 2));
+            }
+        }, 2000);
+    })
 });
 app.get('/analytics/cgpa/:roll/:sem', function (req, res, next) {
     let roll = req.params.roll;
@@ -225,11 +297,10 @@ async function sendRangeResponse(sem, rollBeg, rollEnd) {
     })
 }
 function sorted(jsonObj) {
-    const sortedResult = Object.keys(jsonObj).sort().reduce((obj, key) => {
+    return Object.keys(jsonObj).sort().reduce((obj, key) => {
         obj[key] = jsonObj[key];
         return obj;
     }, {});
-    return sortedResult;
 }
 async function sendResponse(semList, roll, backUp, callback) {
     const cookieJar = request.jar();
