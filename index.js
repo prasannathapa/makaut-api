@@ -55,7 +55,7 @@ app.get('/:roll/:sem', function (req, res, next) {
 
 app.get('/prediction/:roll', function (req, res, next) {
     let roll = req.params.roll;
-    if (!check.isRoll(roll) && roll.length == 11) {
+    if (!check.isRoll(roll) || roll.length != 11) {
         next();
         return;
     }
