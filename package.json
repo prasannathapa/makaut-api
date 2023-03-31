@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js"
   },
+  "engines": { "node": "19.x" },
   "author": "Prasanna Thapa",
   "license": "ISC",
   "dependencies": {
