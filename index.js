@@ -4,13 +4,16 @@ const exam = require('./connector/exam');
 const DB = require('./datastore/mongoStore')
 const { logger } = require('./logger/logger');
 const request = require('request');
+const path = require('path');
 const { getCollegeAnalytics } = require('./Analytics/collegeAnalytics');
 const e = require('express');
 const { getSubjectAnalytics } = require('./Analytics/subjectAnalytics');
 let csrfToken = { id: null, count: 0 }
 const port = process.env.PORT || 8080;
-const timeout = process.env.TIMEOUT || 29000;
+const timeout = process.env.TIMEOUT || 60000;
 const app = express();
+app.use(express.static(path.resolve(__dirname, './frontend')));
+
 DB.init();
 process.on('exit', function () {
     logger.log('About to exit.');
@@ -27,11 +30,7 @@ app.use((req, res, next) => {
     next();
 });
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); app.get('/', function (req, res) {
-    res.statusCode = 302;
-    res.setHeader('Location', 'https://github.com/prasannathapa/makaut-api/blob/master/README.md');
-    return res.end();
-});
+
 app.get('/:roll/:sem', function (req, res) {
     let roll = req.params.roll;
     let sem = req.params.sem;
@@ -107,7 +106,7 @@ async function sendSingleResponse(roll, sem) {
             backUpObj.info = {
                 queryTotal: sem.length,
                 queryProcessed: reqSaved,
-                cause: "this is due to the limitations of heroku server of 30sec timeout",
+                cause: "this is due to the limitations of server of 60sec timeout",
                 fix: "Try sending the Request again as the server",
                 tip: "This is bad, single query should not result in timeout. Try raising issue in its github page"
             };
@@ -191,7 +190,7 @@ async function sendRangeResponse(sem, rollBeg, rollEnd) {
             responseObject.info = {
                 queryTotal: totalCount,
                 queryProcessed: callBackCount,
-                cause: "this is due to the limitations of heroku server of 30sec timeout",
+                cause: "this is due to the limitations of server of 60sec timeout",
                 fix: "Try sending the Request again as the server would cache all of the results in its database for faster access and to minimize the load on makaut server. If this persists then try to reduce the range",
                 tip: "Give valid semesters in which results actally exists, all unpublished results are taken from MAKAUT server or Break your range into 2 halfs"
             };
@@ -278,11 +277,6 @@ async function sendResponse(semList, roll, backUp, callback) {
     });
 }
 
-
-app.get('/restart', function (req, res) {
-    process.exit(1);
-});
-
 app.get('/subjectCodes', function (req, res) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end("{subjectCodes:" + JSON.stringify(check.subjectCodeMap) + "}");
@@ -290,6 +284,9 @@ app.get('/subjectCodes', function (req, res) {
 app.use(function (req, res) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end("{error:\"Cannot process your request\", info:\"Invalid Query\"}");
+});
+app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, './frontend', 'index.html'));
 });
 app.listen(port, () => {
     logger.log("server started at http://localhost:" + port);
