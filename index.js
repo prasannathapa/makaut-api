@@ -29,6 +29,7 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     next();
 });
+app.use(express.json());
 
 app.get('/:roll/:sem', function (req, res) {
     let roll = req.params.roll;
@@ -136,9 +137,9 @@ app.get('/analytics/college/:collegecode', function (req, res, next) {
         next();
     }
 });
-app.get('/subjectReport/:sem/:subCode', function (req, res, next) {
-    let subCode = req.params.subCode;
-    let semNo = req.params.sem;
+app.post('/subjectReport', function (req, res, next) {
+    let subCode = req.body.subCode;
+    let semNo = req.body.sem;
     if (!semNo || !subCode) {
         next();
         return;
