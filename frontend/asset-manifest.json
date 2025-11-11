@@ -1,19 +1,19 @@
 {
   "files": {
-    "main.css": "/static/css/main.a8048158.chunk.css",
-    "main.js": "/static/js/main.5881d0a4.chunk.js",
-    "main.js.map": "/static/js/main.5881d0a4.chunk.js.map",
-    "runtime-main.js": "/static/js/runtime-main.4fab7e9f.js",
-    "runtime-main.js.map": "/static/js/runtime-main.4fab7e9f.js.map",
-    "static/css/2.417ae89d.chunk.css": "/static/css/2.417ae89d.chunk.css",
-    "static/js/2.750966de.chunk.js": "/static/js/2.750966de.chunk.js",
-    "static/js/2.750966de.chunk.js.map": "/static/js/2.750966de.chunk.js.map",
-    "static/js/3.b6557c64.chunk.js": "/static/js/3.b6557c64.chunk.js",
-    "static/js/3.b6557c64.chunk.js.map": "/static/js/3.b6557c64.chunk.js.map",
+    "main.css": "/static/css/main.64f29f8f.chunk.css",
+    "main.js": "/static/js/main.a35d57e0.chunk.js",
+    "main.js.map": "/static/js/main.a35d57e0.chunk.js.map",
+    "runtime-main.js": "/static/js/runtime-main.9bae9d90.js",
+    "runtime-main.js.map": "/static/js/runtime-main.9bae9d90.js.map",
+    "static/css/2.0a00179b.chunk.css": "/static/css/2.0a00179b.chunk.css",
+    "static/js/2.1c1a9a58.chunk.js": "/static/js/2.1c1a9a58.chunk.js",
+    "static/js/2.1c1a9a58.chunk.js.map": "/static/js/2.1c1a9a58.chunk.js.map",
+    "static/js/3.452f1aa2.chunk.js": "/static/js/3.452f1aa2.chunk.js",
+    "static/js/3.452f1aa2.chunk.js.map": "/static/js/3.452f1aa2.chunk.js.map",
     "index.html": "/index.html",
-    "static/css/2.417ae89d.chunk.css.map": "/static/css/2.417ae89d.chunk.css.map",
-    "static/css/main.a8048158.chunk.css.map": "/static/css/main.a8048158.chunk.css.map",
-    "static/js/2.750966de.chunk.js.LICENSE.txt": "/static/js/2.750966de.chunk.js.LICENSE.txt",
+    "static/css/2.0a00179b.chunk.css.map": "/static/css/2.0a00179b.chunk.css.map",
+    "static/css/main.64f29f8f.chunk.css.map": "/static/css/main.64f29f8f.chunk.css.map",
+    "static/js/2.1c1a9a58.chunk.js.LICENSE.txt": "/static/js/2.1c1a9a58.chunk.js.LICENSE.txt",
     "static/media/ai.6e422271.svg": "/static/media/ai.6e422271.svg",
     "static/media/book.92d7021f.svg": "/static/media/book.92d7021f.svg",
     "static/media/college-analytics.9ed57aab.png": "/static/media/college-analytics.9ed57aab.png",
@@ -37,10 +37,10 @@
     "static/media/sync.95e3a566.svg": "/static/media/sync.95e3a566.svg"
   },
   "entrypoints": [
-    "static/js/runtime-main.4fab7e9f.js",
-    "static/css/2.417ae89d.chunk.css",
-    "static/js/2.750966de.chunk.js",
-    "static/css/main.a8048158.chunk.css",
-    "static/js/main.5881d0a4.chunk.js"
+    "static/js/runtime-main.9bae9d90.js",
+    "static/css/2.0a00179b.chunk.css",
+    "static/js/2.1c1a9a58.chunk.js",
+    "static/css/main.64f29f8f.chunk.css",
+    "static/js/main.a35d57e0.chunk.js"
   ]
 }
